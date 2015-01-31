@@ -7,3 +7,6 @@ To build:
 
 Open Sandbox.swf in the bin folder.
 **Note: Make sure the latest version of flash player is installed.
+
+Graphics Extension Library:
+	https://github.com/StarlingGraphics/Starling-Extension-Graphics/wiki
