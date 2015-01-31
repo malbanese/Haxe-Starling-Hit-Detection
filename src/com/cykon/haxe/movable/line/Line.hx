@@ -16,8 +16,17 @@ package com.cykon.haxe.movable.line;
  class Line{
 	
 	var P1:Point;
-	public var P2:Point;
+	var P2:Point;
 	var norm:Vector;
+	var vector:Vector;
+	
+	public function getVector():Vector{
+		return vector.clone();
+	}
+	
+	public function getNorm():Vector{
+		return norm.clone();
+	}
 	
 	public function getP1():Point{
 		return P1;
@@ -35,7 +44,7 @@ package com.cykon.haxe.movable.line;
 		this.P1 = P1;
 		this.P2 = P2;
 		
-		var vectorLine:Vector = Vector.getVector(P1.x,P1.y,P2.x,P2.y);
-		norm = vectorLine.normalize().getPerpendicular();
+		vector = Vector.getVector(P1.x,P1.y,P2.x,P2.y);
+		norm = vector.normalize().getPerpendicular();
 	}
  }

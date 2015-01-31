@@ -11,7 +11,9 @@ package com.cykon.haxe.movable.circle;
   */
  
 
+import com.cykon.haxe.movable.line.Line;
 import com.cykon.haxe.cmath.Vector;
+import com.cykon.haxe.util.VectorDisplay;
 import starling.textures.Texture;
 
 class Circle extends starling.display.Image {
@@ -52,6 +54,11 @@ class Circle extends starling.display.Image {
 	/** Return the vy of this */
 	public function getVY() : Float{
 		return vy;
+	}
+	
+	/** Return the vxy in velocity format */
+	public function getVelVector() : Vector{
+		return new Vector(vx,vy);
 	}
 	
 	/** Return the radius of this */
@@ -125,6 +132,66 @@ class Circle extends starling.display.Image {
 			  || XBound[1] < xBound[0]
 		      || YBound[0] > yBound[1]
 			  || YBound[1] < yBound[0]);
+	}
+	
+	/** Test if this circle has collided with a line */
+	public function lineHit( line : Line, modifier : Float = 1.0 ): Bool {
+		var thisVector = new Vector(this.vx,this.vy);
+		
+		// Preliminary check to make sure we're at least heading towards the line
+		var lineVector = line.getVector();
+		
+		// Get the direct vector between this and a point on the line
+		var pointVector = Vector.getVector(this.getX(), this.getY(), line.getP1().x, line.getP1().y);
+		
+		// Get the closest vector between the circle and the line
+		var closestVector = line.getNorm();
+		var closestMag = closestVector.multiply(closestVector.dot(pointVector)).mag;
+		
+		// Get the closest vector in regards to the circle's velocity
+		closestVector.normalize().multiply( closestVector.dot(thisVector) );
+		
+		// Get the hit ratio, to correct thisVector with
+		var hitRatio = (closestMag - radius) / closestVector.mag;
+		
+		trace(hitRatio);
+		
+		// We have a hit, but still need to check if we hit within the line's bounds
+		if(hitRatio < 1.0){
+			this.parent.addChild( VectorDisplay.display( thisVector, getX(), getY() ) );
+			this.parent.addChild( VectorDisplay.display( closestVector, getX(), getY() ) );
+			
+			// New (x,y) positions
+			var nx = x + vx*hitRatio;
+			var ny = y + vy*hitRatio;
+			
+			// Vectors from each end point to the circle
+			var pv1 = Vector.getVector( nx, ny, line.getP1().x, line.getP1().y );
+			var pv2 = Vector.getVector( nx, ny, line.getP2().x, line.getP2().y );
+			
+			// Vectors are in the same direction... check endpoints
+			if(pv1.dot(pv2) > 0){
+				var point = (pv1.mag < pv2.mag) ? line.getP1() : line.getP2();
+				var closestVector = Vector.getVector( getX(), getY(), point.x, point.y );
+				var newVector = thisVector.clone().normalize();
+				newVector.multiply( newVector.dot(closestVector) );
+				
+				var dotMag = Math.sqrt( closestVector.mag*closestVector.mag - newVector.mag*newVector.mag );
+				
+				// If this doesn't satisfy, there was no hit
+				if(dotMag > radius)
+					return false;
+					
+				var hitMag = Math.sqrt(radius*radius - dotMag*dotMag);
+				hitRatio = (newVector.mag - hitMag) / thisVector.mag;
+			}
+			
+			this.x += vx*hitRatio;
+			this.y += vy*hitRatio;
+			return true;
+		}
+		
+		return false;
 	}
 	
 	/** Test if this circle has collided with another circle */

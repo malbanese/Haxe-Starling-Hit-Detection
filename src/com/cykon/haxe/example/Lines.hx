@@ -15,6 +15,7 @@ import starling.display.Stage;
 import starling.display.Shape;
 import flash.system.System;
 
+import com.cykon.haxe.movable.circle.Circle;
 import com.cykon.haxe.movable.line.Line;
 import com.cykon.haxe.movable.line.LineDisplay;
 import com.cykon.haxe.cmath.Vector;
@@ -59,11 +60,25 @@ class Lines extends starling.display.Sprite {
 	var L1:Line;
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {
-		L1 = Line.getLine(100,100,200,200);
-		var lineDisplay = new LineDisplay(2,0,1);
-		lineDisplay.addLines([L1]);
+		var circle = new Circle( assets.getTexture("circle"), 272, 500, 25 );
+			circle.setVelocity(-500,-500);
+		addChild(circle);
 		
+		
+		var line = Line.getLine(400,300,200,400);
+		var lineDisplay = new LineDisplay(2,0,1);
+		lineDisplay.addLines([line]);
+		
+		// Display the circle's velocity vector
+		addChild( VectorDisplay.display(circle.getVelVector(), circle.getX(), circle.getY()) );
+		
+		// Display the line's norm multiplied by 25
+		addChild(VectorDisplay.display( line.getNorm().multiply(25), line.getP1().x, line.getP1().y ));
+		
+		// Display the line
 		addChild(lineDisplay);
+		
+		trace("Hit: " + circle.lineHit(line));
 		
 		// Start the onEnterFrame calls
 		this.addEventListener(EnterFrameEvent.ENTER_FRAME, onEnterFrame);	
@@ -94,7 +109,6 @@ class Lines extends starling.display.Sprite {
 	
 	/** Used to keep track when a key is pressed */
 	private function keyDown(event:KeyboardEvent){
-		L1.P2.x += 10;
 	}
 	
 	/** Main method, used to set up the initial game instance */
