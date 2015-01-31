@@ -53,15 +53,6 @@ class Circles extends starling.display.Sprite {
 	// Simple constructor
     public function new() {
         super();
-		
-		var c1 = new Vector(0,5);
-		var v1 = new Vector(5,-15);
-		var r1 = 2;
-		
-		var c2 = new Vector(0,0);
-		var v2 = new Vector(5,15);
-		var r2 = 2;
-		
 		populateAssetManager();
     }
 	

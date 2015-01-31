@@ -4,7 +4,7 @@ all:
 	-swf-header 1280:720:120:000000 \
 	-swf-version 11.3 \
 	-swf bin/Circles.swf \
-	-swf-lib ../../starling.swc \
+	-swf-lib ../../Starling.swc \
 	--macro "patchTypes('../../starling.patch')" \
 	-main com.cykon.haxe.example.Circles
 
