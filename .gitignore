@@ -1,2 +1,3 @@
-bin/Sandbox.swf
 *.db
+*/bin/*
+*.swf
