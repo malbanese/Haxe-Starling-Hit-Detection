@@ -60,8 +60,8 @@ class Lines extends starling.display.Sprite {
 	var L1:Line;
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {
-		var circle = new Circle( assets.getTexture("circle"), 272, 500, 25 );
-			circle.setVelocity(-500,-500);
+		var circle = new Circle( assets.getTexture("circle"), 100, 100, 25 );
+			circle.setVelocity(-200,101);
 		addChild(circle);
 		
 		

@@ -138,28 +138,33 @@ class Circle extends starling.display.Image {
 	public function lineHit( line : Line, modifier : Float = 1.0 ): Bool {
 		var thisVector = new Vector(this.vx,this.vy);
 		
-		// Preliminary check to make sure we're at least heading towards the line
-		var lineVector = line.getVector();
-		
 		// Get the direct vector between this and a point on the line
 		var pointVector = Vector.getVector(this.getX(), this.getY(), line.getP1().x, line.getP1().y);
 		
+		// Preliminary check to make sure that the circle is going towards the line
+		var lineNorm = line.getNorm();
+		if(lineNorm.dot(pointVector) >  0){
+			lineNorm = lineNorm.getOpposite();
+		}
+
+		// Circle is not moving towards the line
+		if(lineNorm.dot(thisVector) >= 0){
+			return false;
+		}
+				
 		// Get the closest vector between the circle and the line
-		var closestVector = line.getNorm();
-		var closestMag = closestVector.multiply(closestVector.dot(pointVector)).mag;
+		var closestMag = lineNorm.multiply(lineNorm.dot(pointVector)).mag;
 		
 		// Get the closest vector in regards to the circle's velocity
-		closestVector.normalize().multiply( closestVector.dot(thisVector) );
+		lineNorm.normalize().multiply( lineNorm.dot(thisVector) );
 		
 		// Get the hit ratio, to correct thisVector with
-		var hitRatio = (closestMag - radius) / closestVector.mag;
-		
-		trace(hitRatio);
-		
+		var hitRatio = (closestMag - radius) / lineNorm.mag;
+				
 		// We have a hit, but still need to check if we hit within the line's bounds
 		if(hitRatio < 1.0){
 			this.parent.addChild( VectorDisplay.display( thisVector, getX(), getY() ) );
-			this.parent.addChild( VectorDisplay.display( closestVector, getX(), getY() ) );
+			this.parent.addChild( VectorDisplay.display( lineNorm, getX(), getY() ) );
 			
 			// New (x,y) positions
 			var nx = x + vx*hitRatio;
