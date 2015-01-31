@@ -12,7 +12,13 @@ import starling.textures.Texture;
 import starling.events.EnterFrameEvent;
 import starling.events.KeyboardEvent;
 import starling.display.Stage;
+import starling.display.Shape;
 import flash.system.System;
+
+import com.cykon.haxe.movable.line.Line;
+import com.cykon.haxe.movable.line.LineDisplay;
+import com.cykon.haxe.cmath.Vector;
+import com.cykon.haxe.util.VectorDisplay;
 
 class Lines extends starling.display.Sprite {
 	/* The 'perfect' update time, used to modify velocities in case
@@ -50,8 +56,19 @@ class Lines extends starling.display.Sprite {
 		startGame();
 	}
 	
+	var L1:Line;
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {
+		L1 = Line.getLine(100,100,200,200);
+		var lineDisplay = new LineDisplay(2,0,1);
+		lineDisplay.addLines([L1]);
+		
+		addChild(lineDisplay);
+		
+		// Start the onEnterFrame calls
+		this.addEventListener(EnterFrameEvent.ENTER_FRAME, onEnterFrame);	
+		globalStage.addEventListener(KeyboardEvent.KEY_DOWN, keyDown);
+		globalStage.addEventListener(KeyboardEvent.KEY_UP, keyUp);
 	}
 	
 	/** The game is over! */
@@ -77,6 +94,7 @@ class Lines extends starling.display.Sprite {
 	
 	/** Used to keep track when a key is pressed */
 	private function keyDown(event:KeyboardEvent){
+		L1.P2.x += 10;
 	}
 	
 	/** Main method, used to set up the initial game instance */
@@ -86,7 +104,7 @@ class Lines extends starling.display.Sprite {
         try {
 			// Attempt to start the game logic 
 			var starling = new starling.core.Starling(Lines, flash.Lib.current.stage);
-			//starling.showStats = true;
+			starling.showStats = true;
             globalStage = starling.stage; 
 			starling.start();  
         } catch(e:Dynamic){
