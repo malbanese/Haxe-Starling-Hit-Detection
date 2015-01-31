@@ -52,6 +52,10 @@ class BaseProject extends starling.display.Sprite {
 	
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {
+		// Start the onEnterFrame calls
+		this.addEventListener(EnterFrameEvent.ENTER_FRAME, onEnterFrame);	
+		globalStage.addEventListener(KeyboardEvent.KEY_DOWN, keyDown);
+		globalStage.addEventListener(KeyboardEvent.KEY_UP, keyUp);
 	}
 	
 	/** The game is over! */
