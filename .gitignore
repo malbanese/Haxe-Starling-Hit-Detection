@@ -1,3 +1,4 @@
 *.db
 */bin/*
 *.swf
+examples/circles/bin/Circles.swf
