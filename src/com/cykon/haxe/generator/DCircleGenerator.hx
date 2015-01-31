@@ -41,7 +41,7 @@ class DCircleGenerator {
 		this.interval = interval;
 		this.stageWidth = stageWidth;
 		this.stageHeight = stageHeight;
-		this.spawnDist = Math.max(stageWidth,stageHeight)*1.0;
+		this.spawnDist = Math.sqrt(stageWidth*stageWidth + stageHeight*stageHeight);
 	}
 	
 	public function getInterval():Int{
