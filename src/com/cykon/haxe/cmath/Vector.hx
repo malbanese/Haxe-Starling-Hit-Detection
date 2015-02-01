@@ -74,7 +74,6 @@ class Vector {
 		
 		vx = nvx;
 		vy = nvy;
-		
 		return this;
 	}
 	
@@ -84,6 +83,15 @@ class Vector {
 			return this;
 
 		magnitude += this.mag;
+		return normalize().multiply(magnitude);
+	}
+	
+	/** Multiply some magnitude to this vector */
+	public function multiplyMagnitude(magnitude:Float):Vector{
+		if(magnitude == 0)
+			return this;
+
+		magnitude = magnitude * this.mag;
 		return normalize().multiply(magnitude);
 	}
 	
