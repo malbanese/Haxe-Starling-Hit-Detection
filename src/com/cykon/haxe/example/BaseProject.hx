@@ -56,6 +56,7 @@ class BaseProject extends starling.display.Sprite {
 		this.addEventListener(EnterFrameEvent.ENTER_FRAME, onEnterFrame);	
 		globalStage.addEventListener(KeyboardEvent.KEY_DOWN, keyDown);
 		globalStage.addEventListener(KeyboardEvent.KEY_UP, keyUp);
+		globalStage.addEventListener(TouchEvent.TOUCH, onTouch);
 	}
 	
 	/** The game is over! */
@@ -81,6 +82,10 @@ class BaseProject extends starling.display.Sprite {
 	
 	/** Used to keep track when a key is pressed */
 	private function keyDown(event:KeyboardEvent){
+	}
+	
+	/** Used to detect clicks */
+	private function onTouch( event:TouchEvent ){
 	}
 	
 	/** Main method, used to set up the initial game instance */
