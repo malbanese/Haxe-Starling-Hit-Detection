@@ -11,10 +11,13 @@ import starling.utils.AssetManager;
 import starling.textures.Texture;
 import starling.events.EnterFrameEvent;
 import starling.events.KeyboardEvent;
+import starling.events.TouchEvent;
+import starling.events.Touch;
 import starling.display.Stage;
 import starling.display.Shape;
 import flash.system.System;
 
+import com.cykon.haxe.movable.circle.PlayerCircle;
 import com.cykon.haxe.movable.circle.Circle;
 import com.cykon.haxe.movable.line.Line;
 import com.cykon.haxe.movable.line.LineDisplay;
@@ -32,6 +35,14 @@ class Lines extends starling.display.Sprite {
 	// Keep track of game assets
 	var assets : AssetManager  = new AssetManager();
 	var running = true;
+	
+	var mouseX:Float;
+	var mouseY:Float;
+	var spawnX:Float;
+	var spawnY:Float;
+	
+	var player:Circle;
+	var line:Line;
 	
 	// Simple constructor
     public function new() {
@@ -60,30 +71,21 @@ class Lines extends starling.display.Sprite {
 	var L1:Line;
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {
-		var circle = new Circle( assets.getTexture("circle"), 100, 100, 25 );
-			circle.setVelocity(-200,101);
-		addChild(circle);
+		player = new Circle( assets.getTexture("circle"), 100, 100, 25 );
+		player.setVelocity(0,0);
 		
-		
-		var line = Line.getLine(400,300,200,400);
+		line = Line.getLine(400,300,200,400);
 		var lineDisplay = new LineDisplay(2,0,1);
 		lineDisplay.addLines([line]);
 		
-		// Display the circle's velocity vector
-		addChild( VectorDisplay.display(circle.getVelVector(), circle.getX(), circle.getY()) );
-		
-		// Display the line's norm multiplied by 25
-		addChild(VectorDisplay.display( line.getNorm().multiply(25), line.getP1().x, line.getP1().y ));
-		
-		// Display the line
 		addChild(lineDisplay);
-		
-		trace("Hit: " + circle.lineHit(line));
+		addChild(player);
 		
 		// Start the onEnterFrame calls
 		this.addEventListener(EnterFrameEvent.ENTER_FRAME, onEnterFrame);	
 		globalStage.addEventListener(KeyboardEvent.KEY_DOWN, keyDown);
 		globalStage.addEventListener(KeyboardEvent.KEY_UP, keyUp);
+		globalStage.addEventListener(TouchEvent.TOUCH, onTouch);
 	}
 	
 	/** The game is over! */
@@ -98,9 +100,28 @@ class Lines extends starling.display.Sprite {
 	private function onEnterFrame( event:EnterFrameEvent ) {
 		if(!running)
 			return;
-			
+		
+		haxe.Log.clear();
 		// Create a modifier based on time passed / expected time
 		var modifier = (event == null) ? 1.0 : event.passedTime / perfectDeltaTime;
+		
+		player.applyVelocity(1.0);
+		
+		if(player.lineHit(line, modifier)){
+			player.setVelocity(0,0);
+		}
+	}
+	
+	/** Used to detect clicks */
+	private function onTouch( event:TouchEvent ){
+		var touch:Touch = event.touches[0];
+		if(touch.phase == "ended"){
+			spawnX = touch.globalX;
+			spawnY = touch.globalY;
+		}
+		
+		mouseX = touch.globalX;
+		mouseY = touch.globalY;
 	}
 	
 	/** Used to keep track of when a key is unpressed */
@@ -109,6 +130,13 @@ class Lines extends starling.display.Sprite {
 	
 	/** Used to keep track when a key is pressed */
 	private function keyDown(event:KeyboardEvent){
+		if(event.keyCode == 32){
+			player.setLoc(spawnX,spawnY);
+			
+			var vector = Vector.getVector(player.getX(), player.getY(), mouseX, mouseY);
+			vector.normalize().multiply(15);
+			player.setVelocity(vector.vx, vector.vy);
+		}
 	}
 	
 	/** Main method, used to set up the initial game instance */
