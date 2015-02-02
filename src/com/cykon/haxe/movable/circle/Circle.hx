@@ -146,29 +146,30 @@ class Circle extends starling.display.Image {
 		var pointVector = Vector.getVector(this.getX(), this.getY(), line.getP1().x, line.getP1().y);
 		
 		// Preliminary check to make sure that the circle is going towards the line
-		var lineNorm = line.getNorm();
-		if(lineNorm.dot(pointVector) >  0){
-			lineNorm = lineNorm.getOpposite();
+		var closestVector = line.getNorm();
+		if(closestVector.dot(pointVector) >  0){
+			closestVector = closestVector.getOpposite();
 		}
 		
 		// In this case, the circle is moving away from the line
 		var movingAway = false;
-		if(lineNorm.dot(thisVector) >= 0){
+		if(closestVector.dot(thisVector) >= 0){
 			movingAway = true;
 		}
 		
 		// Get the closest vector between the circle and the line
-		var closestMag = lineNorm.multiply(lineNorm.dot(pointVector)).mag;
+		var closestMag = closestVector.multiply(closestVector.dot(pointVector)).mag;
 		
 		// The circle is moving away from the line, and we are more than radius away
 		if(movingAway && closestMag > radius)
 			return false;
 			
 		// Get the closest vector in regards to the circle's velocity
-		lineNorm.normalize().multiply( lineNorm.dot(thisVector) );
+		closestVector.normalize().multiply( closestVector.dot(thisVector) );
 		
 		// Get the hit ratio, to correct thisVector with
-		var hitRatio = (closestMag - radius) / lineNorm.mag;
+		var hitRatio = (closestMag - radius - 1) / closestVector.mag;
+		
 		
 		// We have a hit, but still need to check if we hit within the line's bounds
 		if(hitRatio < 1.0){
@@ -184,28 +185,31 @@ class Circle extends starling.display.Image {
 			if(pv1.dot(pv2) > 0){
 				// Select the closest point to perform a hit check against
 				var point = (pv1.mag < pv2.mag) ? line.getP1() : line.getP2();
-				var closestVector = Vector.getVector( getX(), getY(), point.x, point.y );
+				closestVector = Vector.getVector( getX(), getY(), point.x, point.y );
+				
+				if(closestVector.dot(thisVector) < 0)
+					return false;
+					
 				var newVector = thisVector.clone().normalize();
 				newVector.multiply( newVector.dot(closestVector) );
 				
 				// Find the distance when the circle will be closest to the point
 				var dotMag = Math.sqrt( closestVector.mag*closestVector.mag - newVector.mag*newVector.mag );
 				
-				// If this doesn't satisfy, there was no hit
-				if(dotMag > radius)
+				// Hit is impossible if the shortest distance is bigger than the radius
+				if(radius <= dotMag)
 					return false;
-				
+					
 				// Using radius, find our new hit ratio
 				var hitMag = Math.sqrt(radius*radius - dotMag*dotMag);
-				hitRatio = (newVector.mag - hitMag) / thisVector.mag;
-				
-				// Hit ratio > 1.0, there was no hit
-				if(hitRatio > 1.0)
-					return false;
+				hitRatio = (newVector.mag - hitMag - 1) / thisVector.mag;
 			}
 			
-			this.hitVector = null; // Need to calculate this <---
+			// Re-check the hitRatio after dealing with endpoints (or not)
+			if(hitRatio < 0 || hitRatio > 1.0)
+				return false;
 			
+			this.hitVector = closestVector.normalize();
 			this.beenHit = true;
 			this.x += vx*hitRatio*modifier;
 			this.y += vy*hitRatio*modifier;
@@ -295,9 +299,9 @@ class Circle extends starling.display.Image {
 	/** Recalculates the velocities so it bounces about the point of impact */
 	public function hitBounce(){
 		if(beenHit){
+			hitVector = hitVector.getPerpendicular();
 			var velVector = new Vector(vx,vy);
-			velVector = velVector.clone().subtract(hitVector.multiply(2*velVector.dot(hitVector))).normalize().multiply(velVector.mag);
-		
+			velVector = hitVector.multiply(2* hitVector.dot(velVector)).subtract(velVector);
 			vx = velVector.vx;
 			vy = velVector.vy;
 		}

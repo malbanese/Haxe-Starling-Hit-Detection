@@ -81,6 +81,11 @@ class Lines extends starling.display.Sprite {
 		addChild(lineDisplay);
 		addChild(player);
 		
+		trace("<CLICK> to set circle starting position");
+		trace("<SPACE> to shoot circle towards mouse cursor");
+		trace("<F> to pause on the next hit");
+		trace("<G> to pause");
+		
 		// Start the onEnterFrame calls
 		this.addEventListener(EnterFrameEvent.ENTER_FRAME, onEnterFrame);	
 		globalStage.addEventListener(KeyboardEvent.KEY_DOWN, keyDown);
@@ -96,19 +101,36 @@ class Lines extends starling.display.Sprite {
 	private function restartGame(){
 	}
 	
+	var V1:Shape = null;
+	var V2:Shape = null;
+	
 	/** Function called every frame update, main game logic loop */
 	private function onEnterFrame( event:EnterFrameEvent ) {
 		if(!running)
 			return;
-		
-		haxe.Log.clear();
+	
 		// Create a modifier based on time passed / expected time
 		var modifier = (event == null) ? 1.0 : event.passedTime / perfectDeltaTime;
 		
-		player.applyVelocity(1.0);
+		player.applyVelocity(modifier);
 		
 		if(player.lineHit(line, modifier)){
-			player.setVelocity(0,0);
+			trace("HIT");
+			
+			if(V1 != null){
+				V1.removeFromParent();
+				V2.removeFromParent();
+			}
+			
+			V1 = VectorDisplay.display( new Vector(player.getVX(), player.getVY()), player.getX(), player.getY() );
+			player.hitBounce();
+			V2 = VectorDisplay.display( new Vector(player.getVX(), player.getVY()), player.getX(), player.getY() );
+			
+			if(zeroVel)
+				running = false;
+			
+			addChild(V1);
+			addChild(V2);
 		}
 	}
 	
@@ -128,13 +150,25 @@ class Lines extends starling.display.Sprite {
 	private function keyUp(event:KeyboardEvent):Void{
 	}
 	
+	var zeroVel = false;
 	/** Used to keep track when a key is pressed */
 	private function keyDown(event:KeyboardEvent){
+		if(event.keyCode == 71){
+			running = !running;
+		}
+		
+		if(event.keyCode == 70){
+			running = true;
+			zeroVel = !zeroVel;
+			trace(zeroVel);
+		}
 		if(event.keyCode == 32){
+			running = true;
+			haxe.Log.clear();
 			player.setLoc(spawnX,spawnY);
 			
 			var vector = Vector.getVector(player.getX(), player.getY(), mouseX, mouseY);
-			vector.normalize().multiply(15);
+			vector.normalize().multiply(10);
 			player.setVelocity(vector.vx, vector.vy);
 		}
 	}
