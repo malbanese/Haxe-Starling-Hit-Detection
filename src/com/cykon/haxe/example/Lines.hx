@@ -57,8 +57,6 @@ class Lines extends starling.display.Sprite {
 		assets.enqueue("../assets/circle.png");
 		assets.enqueue("../assets/circle2.png");
 		assets.loadQueue(function(percent){
-			// Ideally we would have some feedback here (loading screen)
-			
 			// When percent is 1.0 all assets are loaded
 			if(percent == 1.0){
 				startScreen();
@@ -105,7 +103,7 @@ class Lines extends starling.display.Sprite {
 		
 		trace("<CLICK> to set circle starting position");
 		trace("<SPACE> to shoot circle towards mouse cursor");
-		trace("<F> to pause on the next hit");
+		trace("<F> to change hit response.");
 		trace("<G> to pause");
 		
 		// Start the onEnterFrame calls
@@ -123,18 +121,6 @@ class Lines extends starling.display.Sprite {
 	private function restartGame(){
 	}
 	
-	var V1:Shape = null;
-	var V2:Shape = null;
-	
-	private function playerLineMiss(player:Circle, modifier:Float){
-		player.applyVelocity(modifier);
-	}
-	
-	private function playerLineHit(player:Circle, hit:Hit<Line>){
-		player.applyVelocity(hit.getVMod() - 0.025);
-		player.hitSlide(hit.getHitVector());
-	}
-	
 	/** Function called every frame update, main game logic loop */
 	private function onEnterFrame( event:EnterFrameEvent ) {
 		if(!running)
@@ -143,9 +129,22 @@ class Lines extends starling.display.Sprite {
 		// Create a modifier based on time passed / expected time
 		var modifier = (event == null) ? 1.0 : event.passedTime / perfectDeltaTime;
 		
-
 		basicCollider.iterativeHitTest(player, 1, playerLineHit, playerLineMiss, modifier);
 		player.applyAcceleration();
+	}
+	
+	private function playerLineMiss(player:Circle, modifier:Float){
+		player.applyVelocity(modifier);
+	}
+	
+	var hitType = true;
+	private function playerLineHit(player:Circle, hit:Hit<Line>){
+		player.applyVelocity(hit.getVMod() - 0.025);
+		
+		if(hitType)
+			player.hitBounce(hit.getHitVector(),0.2);
+		else
+			player.hitSlide(hit.getHitVector());
 	}
 	
 	/** Used to detect clicks */
@@ -164,23 +163,18 @@ class Lines extends starling.display.Sprite {
 	private function keyUp(event:KeyboardEvent):Void{
 	}
 	
-	var useRecorded = false;
-	var recorded = {x:189.0,y:243.0,vx:4.82860975888604, vy:4.82860975888604};
-	var zeroVel = false;
 	/** Used to keep track when a key is pressed */
 	private function keyDown(event:KeyboardEvent){
-		if(event.keyCode == 72){
-			useRecorded = !useRecorded;
-			trace("RECORDING: " + useRecorded);
-		}
-		if(event.keyCode == 71){
-			running = !running;
-		}
+		haxe.Log.clear();
 		
 		if(event.keyCode == 70){
-			running = true;
-			zeroVel = !zeroVel;
-			trace(zeroVel);
+			hitType = !hitType;
+			trace(hitType ? "Bouncing." : "Sliding.");
+		}
+		
+		if(event.keyCode == 71){
+			running = !running;
+			trace(running ? "Running." : "Paused.");
 		}
 
 		if(event.keyCode == 32){
@@ -191,20 +185,11 @@ class Lines extends starling.display.Sprite {
 			var vector = Vector.getVector(player.getX(), player.getY(), mouseX, mouseY);
 			vector.normalize().multiply(10);
 			player.setVelocity(vector.vx, vector.vy);
-			
-			if(useRecorded){
-				player.setLoc(recorded.x, recorded.y);
-				player.setVelocity(recorded.vx, recorded.vy);
-			}
-			
-			recorded = {x:player.getX(), y:player.getY(), vx:player.getVX(), vy:player.getVY()};
 		}
 	}
 	
 	/** Main method, used to set up the initial game instance */
-    public static function main() {
-		// Frame rate the game ~should~ run at
-		
+    public static function main() {		
         try {
 			// Attempt to start the game logic 
 			var starling = new starling.core.Starling(Lines, flash.Lib.current.stage);
