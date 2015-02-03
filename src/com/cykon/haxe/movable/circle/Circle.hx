@@ -21,6 +21,8 @@ class Circle extends starling.display.Image {
 	var radius:Float;	// Circle radius
 	var vx:Float = 0;	// X Velocity
 	var vy:Float = 0;	// Y Velocity
+	var ax:Float = 0;  	// X Acceleration
+	var ay:Float = 0;	// Y Acceleration
 	
 	public var beenHit:Bool = false;  // Tells the updateVelocity method whether we can move or not
 	var hitVector:Vector;	   // The normal vector representing a wall which was hit
@@ -86,6 +88,18 @@ class Circle extends starling.display.Image {
 	public function setVelocity(vx:Float, vy:Float){
 		this.vx = vx;
 		this.vy = vy;
+	}
+	
+	/** Set the acceleration of the circle */
+	public function setAcceleration(ax:Float, ay:Float){
+		this.ax = ax;
+		this.ay = ay;
+	}
+	
+	/** Applies the acceleration of the circle to it's velocities */
+	public function applyAcceleration(){
+		this.vx += ax;
+		this.vy += ay;
 	}
 	
 	/** Applies the velocities of the circle to the x & y coordinates */
@@ -278,7 +292,7 @@ class Circle extends starling.display.Image {
 		return false;
 	}
 	
-	public function realisticBounce( other : Circle ){
+	public function realisticBounce( other : Circle, energyLoss:Float = 0 ){
 		var otherVector = new Vector(other.vx,other.vy);
 		var thisVector = new Vector(this.vx,this.vy);
 		
@@ -297,28 +311,30 @@ class Circle extends starling.display.Image {
 	}
 	
 	/** Recalculates the velocities so it bounces about the point of impact */
-	public function hitBounce(hitVector:Vector){
+	public function hitBounce(hitVector:Vector, energyLoss:Float = 0){
 		hitVector = hitVector.getPerpendicular();
 		var velVector = new Vector(vx,vy);
 		velVector = hitVector.multiply(2* hitVector.dot(velVector)).subtract(velVector);
+		
+		if(energyLoss > 0)
+			velVector.multiply(1.0 - energyLoss);
+			
 		vx = velVector.vx;
 		vy = velVector.vy;
 	}
 	
 	/** Recalculates the velocities so it slides about the point of impact */
-	public function hitSlide(){
-		if(beenHit){
-			var velVector = new Vector(vx,vy);
-			var p1Vector = hitVector.getPerpendicular().normalize().multiply( velVector.getMag() );
-			var p2Vector = hitVector.getPerpendicular().getOpposite().normalize().multiply( velVector.getMag() );
+	public function hitSlide(hitVector:Vector){
+		var velVector = new Vector(vx,vy);
+		var p1Vector = hitVector.getPerpendicular().normalize().multiply( velVector.getMag() );
+		var p2Vector = hitVector.getPerpendicular().getOpposite().normalize().multiply( velVector.getMag() );
 			
-			if(p1Vector.dot(velVector) > p2Vector.dot(velVector)){
-				vx = p1Vector.vx;
-				vy = p1Vector.vy;
-			} else {
-				vx = p2Vector.vx;
-				vy = p2Vector.vy;
-			}
+		if(p1Vector.dot(velVector) > p2Vector.dot(velVector)){
+			vx = p1Vector.vx;
+			vy = p1Vector.vy;
+		} else {
+			vx = p2Vector.vx;
+			vy = p2Vector.vy;
 		}
 	}
 	

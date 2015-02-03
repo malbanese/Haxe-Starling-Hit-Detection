@@ -43,9 +43,7 @@ class Lines extends starling.display.Sprite {
 	var spawnX:Float;
 	var spawnY:Float;
 	
-	var _player:Circle;
 	var player:Circle;
-	var line:Line;
 	var basicCollider:CLCollider;
 	
 	// Simple constructor
@@ -76,20 +74,34 @@ class Lines extends starling.display.Sprite {
 	var L1:Line;
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {
-		player = new Circle( assets.getTexture("circle"), 100, 100, 25 );
-		_player = new Circle( assets.getTexture("circle2"), 100, 100, 25 );
+		player = new Circle( assets.getTexture("circle2"), 100, 100, 25 );
 		player.setVelocity(0,0);
+		player.setAcceleration(0,0.1);
 		
-		line = Line.getLine(400,300,200,400);
-		var lineDisplay = new LineDisplay(2,0,1);
-		lineDisplay.addLines([line]);
+		var hlen = 300;
+		var vlen = 200;
+		var a_Line:Array<Line> = [
+			Line.getLine(0,0,0,globalStage.stageHeight),
+			Line.getLine(0,globalStage.stageHeight,globalStage.stageWidth, globalStage.stageHeight),
+			Line.getLine(globalStage.stageWidth, globalStage.stageHeight, globalStage.stageWidth, 0),
+			Line.getLine(globalStage.stageWidth, 0, 0, 0),
+			Line.getLine(640-hlen,360,640,360-vlen),
+			Line.getLine(640,360-vlen,640+hlen,360),
+			Line.getLine(640+hlen,360,640,360+vlen-250),
+			Line.getLine(640,360+vlen-250,640-hlen,360),
+			Line.getLine(200,5,globalStage.stageWidth,100),
+			Line.getLine(0,globalStage.stageHeight-100, globalStage.stageWidth-200,globalStage.stageHeight-5),
+			Line.getLine(0,100,200,5),
+			Line.getLine(globalStage.stageWidth - 200, globalStage.stageHeight-5, globalStage.stageWidth, globalStage.stageHeight-100)];
 		
 		basicCollider = new CLCollider();
-		basicCollider.add(line);
+		var lineDisplay = new LineDisplay(2,0,1);
+		
+		basicCollider.addLines(a_Line);
+		lineDisplay.addLines(a_Line);
 		
 		addChild(lineDisplay);
 		addChild(player);
-		addChild(_player);
 		
 		trace("<CLICK> to set circle starting position");
 		trace("<SPACE> to shoot circle towards mouse cursor");
@@ -115,7 +127,7 @@ class Lines extends starling.display.Sprite {
 	var V2:Shape = null;
 	
 	private function playerLineHit(player:Circle, hit:Hit<Line>){
-		player.applyVelocity(hit.getVMod());
+		player.applyVelocity(hit.getVMod() - 0.025);
 		player.hitBounce(hit.getHitVector());
 		player.beenHit = true;
 	}
@@ -130,6 +142,7 @@ class Lines extends starling.display.Sprite {
 		
 		basicCollider.hitTest(player, playerLineHit, modifier);
 		player.applyVelocity(modifier);
+		player.applyAcceleration();
 	}
 	
 	/** Used to detect clicks */
@@ -138,7 +151,6 @@ class Lines extends starling.display.Sprite {
 		if(touch.phase == "ended"){
 			spawnX = touch.globalX;
 			spawnY = touch.globalY;
-			_player.setLoc(spawnX,spawnY);
 		}
 		
 		mouseX = touch.globalX;
@@ -183,9 +195,6 @@ class Lines extends starling.display.Sprite {
 			}
 			
 			recorded = {x:player.getX(), y:player.getY(), vx:player.getVX(), vy:player.getVY()};
-			
-			trace(player.getX() + " " + player.getY());
-			trace(player.getVX() + " " + player.getVX());
 		}
 	}
 	

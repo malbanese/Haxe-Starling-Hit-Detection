@@ -30,6 +30,11 @@ class CLCollider extends List<Line> {
 			hitCallback(circle, closestHit);
 	}
 	
+	public function addLines(a_Line:Array<Line>){
+		for(line in a_Line)
+			this.add(line);
+	}
+	
 	public function new() {
 		super();
     }
