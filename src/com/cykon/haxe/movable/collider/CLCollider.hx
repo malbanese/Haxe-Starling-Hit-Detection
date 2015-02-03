@@ -14,7 +14,20 @@ import com.cykon.haxe.movable.circle.Circle;
 
 class CLCollider extends List<Line> {
 	
-	public function hitTest(circle:Circle, hitCallback:Circle->Hit<Line>->Void, modifier:Float, returnFirst:Bool = false){
+	public function iterativeHitTest(circle:Circle, maxIter:Int, hitCallback:Circle->Hit<Line>->Void, missCallback:Circle->Float->Void, modifier:Float){
+		while(maxIter-- != 0 || modifier > 0){
+			var hit = hitTest(circle, hitCallback, modifier);
+			
+			if(hit == null){
+				missCallback(circle, modifier);
+				return;
+			}
+			
+			modifier -= hit.getVMod();
+		}
+	}
+	
+	public function hitTest(circle:Circle, hitCallback:Circle->Hit<Line>->Void, modifier:Float, returnFirst:Bool = false):Hit<Line>{
 		var closestHit:Hit<Line> = null;
 		for(line in this){
 			var hit:Hit<Line> = circle.lineHit(line, modifier);
@@ -28,6 +41,8 @@ class CLCollider extends List<Line> {
 		
 		if(closestHit != null)
 			hitCallback(circle, closestHit);
+		
+		return closestHit;
 	}
 	
 	public function addLines(a_Line:Array<Line>){

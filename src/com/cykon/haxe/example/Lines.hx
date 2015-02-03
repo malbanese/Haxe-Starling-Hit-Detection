@@ -76,7 +76,7 @@ class Lines extends starling.display.Sprite {
 	private function startGame() {
 		player = new Circle( assets.getTexture("circle2"), 100, 100, 25 );
 		player.setVelocity(0,0);
-		player.setAcceleration(0,0.1);
+		player.setAcceleration(0,0.25);
 		
 		var hlen = 300;
 		var vlen = 200;
@@ -126,10 +126,13 @@ class Lines extends starling.display.Sprite {
 	var V1:Shape = null;
 	var V2:Shape = null;
 	
+	private function playerLineMiss(player:Circle, modifier:Float){
+		player.applyVelocity(modifier);
+	}
+	
 	private function playerLineHit(player:Circle, hit:Hit<Line>){
 		player.applyVelocity(hit.getVMod() - 0.025);
-		player.hitBounce(hit.getHitVector());
-		player.beenHit = true;
+		player.hitSlide(hit.getHitVector());
 	}
 	
 	/** Function called every frame update, main game logic loop */
@@ -140,8 +143,8 @@ class Lines extends starling.display.Sprite {
 		// Create a modifier based on time passed / expected time
 		var modifier = (event == null) ? 1.0 : event.passedTime / perfectDeltaTime;
 		
-		basicCollider.hitTest(player, playerLineHit, modifier);
-		player.applyVelocity(modifier);
+
+		basicCollider.iterativeHitTest(player, 1, playerLineHit, playerLineMiss, modifier);
 		player.applyAcceleration();
 	}
 	
