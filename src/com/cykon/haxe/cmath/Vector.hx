@@ -12,11 +12,12 @@ class Vector {
 	public var vx : Float;
 	public var vy : Float;
 	public var mag : Float;
+	public var magDirty : Bool = true;
 	
 	public function new(vx : Float, vy : Float){
 		this.vx = vx;
 		this.vy = vy;
-		updateMag();
+		magDirty = true;
 	}
 	
 	/** Returns a vector about two points */
@@ -33,7 +34,7 @@ class Vector {
 	public function multiply(mag : Float) : Vector{
 		vx *= mag;
 		vy *= mag;
-		updateMag();
+		magDirty = true;
 		return this;
 	}
 	
@@ -41,7 +42,7 @@ class Vector {
 	public function subtract(vector : Vector):Vector{
 		vx -= vector.vx;
 		vy -= vector.vy;
-		updateMag();
+		magDirty = true;
 		return this;
 	}
 	
@@ -49,15 +50,15 @@ class Vector {
 	public function add(vector : Vector):Vector{
 		vx += vector.vx;
 		vy += vector.vy;
-		updateMag();
+		magDirty = true;
 		return this;
 	}
 	
 	/** Normalizes this vector */
 	public function normalize() : Vector{
-		vx = vx / mag;
-		vy = vy / mag;
-		updateMag();
+		vx = vx / getMag();
+		vy = vy / getMag();
+		magDirty = true;
 		return this;
 	}
 	
@@ -77,21 +78,12 @@ class Vector {
 		return this;
 	}
 	
-	/** Adds some magnitude to this vector */
+	/** Adds some.getMag()nitude to this vector */
 	public function addMagnitude(magnitude:Float):Vector{
 		if(magnitude == 0)
 			return this;
 
-		magnitude += this.mag;
-		return normalize().multiply(magnitude);
-	}
-	
-	/** Multiply some magnitude to this vector */
-	public function multiplyMagnitude(magnitude:Float):Vector{
-		if(magnitude == 0)
-			return this;
-
-		magnitude = magnitude * this.mag;
+		magnitude += this.getMag();
 		return normalize().multiply(magnitude);
 	}
 	
@@ -107,7 +99,7 @@ class Vector {
 	
 	/** Projects this vector onto another vector */
 	public function onto( vector : Vector ) : Vector{
-		var multiplier = dot(vector) / (vector.mag*vector.mag);
+		var multiplier = dot(vector) / (vector.getMag()*vector.getMag());
 		var newVector = new Vector(multiplier*vector.vx, multiplier*vector.vy);
 		return newVector;
 	}
@@ -121,7 +113,7 @@ class Vector {
 	public function getAngle() : Float{
 		return Math.atan2(vy,vx);
 	}
-	
+	 
 	/** Obtains a perpendicular vector */
 	public function getPerpendicular(){
 		return new Vector(-vy,vx);
@@ -132,8 +124,13 @@ class Vector {
 		return new Vector(-vx,-vy);
 	}
 	
-	/** Updates this vector's magnitude */
-	private function updateMag(){
-		this.mag = Math.sqrt(vx*vx + vy*vy);
+	/** Get the magnitude of this vector */
+	public function getMag() : Float{
+		if(magDirty){
+			mag = Math.sqrt(vx*vx + vy*vy);
+			magDirty = false;
+		}
+		
+		return mag;
 	}
 }

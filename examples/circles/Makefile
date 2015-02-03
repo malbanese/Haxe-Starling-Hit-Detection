@@ -5,6 +5,7 @@ all:
 	-swf-version 11.3 \
 	-swf bin/Circles.swf \
 	-swf-lib ../../Starling.swc \
+	-swf-lib ../../Starling-Extension-Graphics.swc \
 	--macro "patchTypes('../../starling.patch')" \
 	-main com.cykon.haxe.example.Circles
 

@@ -23,6 +23,8 @@ import com.cykon.haxe.movable.line.Line;
 import com.cykon.haxe.movable.line.LineDisplay;
 import com.cykon.haxe.cmath.Vector;
 import com.cykon.haxe.util.VectorDisplay;
+import com.cykon.haxe.movable.collider.CLCollider;
+import com.cykon.haxe.movable.Hit;
 
 class Lines extends starling.display.Sprite {
 	/* The 'perfect' update time, used to modify velocities in case
@@ -44,6 +46,7 @@ class Lines extends starling.display.Sprite {
 	var _player:Circle;
 	var player:Circle;
 	var line:Line;
+	var basicCollider:CLCollider;
 	
 	// Simple constructor
     public function new() {
@@ -81,6 +84,9 @@ class Lines extends starling.display.Sprite {
 		var lineDisplay = new LineDisplay(2,0,1);
 		lineDisplay.addLines([line]);
 		
+		basicCollider = new CLCollider();
+		basicCollider.add(line);
+		
 		addChild(lineDisplay);
 		addChild(player);
 		addChild(_player);
@@ -108,6 +114,12 @@ class Lines extends starling.display.Sprite {
 	var V1:Shape = null;
 	var V2:Shape = null;
 	
+	private function playerLineHit(player:Circle, hit:Hit<Line>){
+		player.applyVelocity(hit.getVMod());
+		player.hitBounce(hit.getHitVector());
+		player.beenHit = true;
+	}
+	
 	/** Function called every frame update, main game logic loop */
 	private function onEnterFrame( event:EnterFrameEvent ) {
 		if(!running)
@@ -116,27 +128,7 @@ class Lines extends starling.display.Sprite {
 		// Create a modifier based on time passed / expected time
 		var modifier = (event == null) ? 1.0 : event.passedTime / perfectDeltaTime;
 		
-		
-		
-		if(player.lineHit(line, modifier)){
-			trace("HIT");
-			
-			if(V1 != null){
-				V1.removeFromParent();
-				V2.removeFromParent();
-			}
-			
-			V1 = VectorDisplay.display( new Vector(player.getVX(), player.getVY()), player.getX(), player.getY() );
-			player.hitBounce();
-			V2 = VectorDisplay.display( new Vector(player.getVX(), player.getVY()), player.getX(), player.getY() );
-			
-			if(zeroVel)
-				running = false;
-			
-			addChild(V1);
-			addChild(V2);
-		}
-		
+		basicCollider.hitTest(player, playerLineHit, modifier);
 		player.applyVelocity(modifier);
 	}
 	

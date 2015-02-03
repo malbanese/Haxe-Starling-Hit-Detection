@@ -10,7 +10,7 @@ package com.cykon.haxe.movable.circle;
   *
   */
  
-
+import com.cykon.haxe.movable.Hit;
 import com.cykon.haxe.movable.line.Line;
 import com.cykon.haxe.cmath.Vector;
 import com.cykon.haxe.util.VectorDisplay;
@@ -22,7 +22,7 @@ class Circle extends starling.display.Image {
 	var vx:Float = 0;	// X Velocity
 	var vy:Float = 0;	// Y Velocity
 	
-	var beenHit:Bool = false;  // Tells the updateVelocity method whether we can move or not
+	public var beenHit:Bool = false;  // Tells the updateVelocity method whether we can move or not
 	var hitVector:Vector;	   // The normal vector representing a wall which was hit
 	var leftoverMag:Float = 0; // The leftover magnitude from the last hit;
 	var massMod = 1.0;		   // Modifier to change mass by...
@@ -102,7 +102,7 @@ class Circle extends starling.display.Image {
 		else
 			movVector = new Vector(vx,vy).normalize().multiply(leftoverMag*modifier);
 		
-		if(Math.isNaN(movVector.mag)){
+		if(Math.isNaN(movVector.getMag())){
 			movVector.vx = movVector.vy = 0;
 		}
 		
@@ -133,12 +133,12 @@ class Circle extends starling.display.Image {
 		      || YBound[0] > yBound[1]
 			  || YBound[1] < yBound[0]);
 	}
-	
+	 
 	/** Test if this circle has collided with a line */
-	public function lineHit( line : Line, modifier : Float = 1.0 ): Bool {
+	public function lineHit( line : Line, modifier : Float = 1.0 ): Hit<Line> {
 		// No movement = no need to compute
 		if(this.vx == 0 && this.vy == 0)
-			return false;
+			return null;
 		
 		var thisVector = new Vector(this.vx,this.vy).multiply(modifier);
 		
@@ -158,18 +158,18 @@ class Circle extends starling.display.Image {
 		}
 		
 		// Get the closest vector between the circle and the line
-		var closestMag = closestVector.multiply(closestVector.dot(pointVector)).mag;
+		var closestMag = closestVector.multiply(closestVector.dot(pointVector)).getMag();
 		
 		// trace(closestMag);
 		// The circle is moving away from the line, and we are more than radius away
 		if(movingAway && closestMag > radius)
-			return false;
+			return null;
 			
 		// Get the closest vector in regards to the circle's velocity
 		closestVector.normalize().multiply( closestVector.dot(thisVector) );
 		
 		// Get the hit ratio, to correct thisVector with
-		var hitRatio = (closestMag - radius) / closestVector.mag;
+		var hitRatio = (closestMag - radius) / closestVector.getMag();
 	
 		// We have a hit, but still need to check if we hit within the line's bounds
 		if(hitRatio <= 1.0){
@@ -184,39 +184,39 @@ class Circle extends starling.display.Image {
 			// Vectors are in the same direction... we are outside of the line and need to check endpoints
 			if(pv1.dot(pv2) > 0){
 				// Select the closest point to perform a hit check against
-				var point = (pv1.mag < pv2.mag) ? line.getP1() : line.getP2();
+				var point = (pv1.getMag() < pv2.getMag()) ? line.getP1() : line.getP2();
 				closestVector = Vector.getVector( getX(), getY(), point.x, point.y );
 				
 				if(closestVector.dot(thisVector) < 0)
-					return false;
+					return null;
 					
 				var newVector = thisVector.clone().normalize();
 				newVector.multiply( newVector.dot(closestVector) );
 				
 				// Find the distance when the circle will be closest to the point
-				var dotMag = Math.sqrt( closestVector.mag*closestVector.mag - newVector.mag*newVector.mag );
+				var dotMag = Math.sqrt( closestVector.getMag()*closestVector.getMag() - newVector.getMag()*newVector.getMag() );
 				
 				// Hit is impossible if the shortest distance is bigger than the radius
 				if(radius <= dotMag)
-					return false;
+					return null;
 					
 				// Using radius, find our new hit ratio
 				var hitMag = Math.sqrt(radius*radius - dotMag*dotMag);
-				hitRatio = (newVector.mag - hitMag) / thisVector.mag - 0.05;
+				hitRatio = (newVector.getMag() - hitMag) / thisVector.getMag();
 			}
 			
 			// Re-check the hitRatio after dealing with endpoints (or not)
 			if(hitRatio < 0 || hitRatio >= 1.0)
-				return false;
+				return null;
 			
-			this.hitVector = closestVector.normalize();
-			this.beenHit = true;
-			this.x += vx*hitRatio*modifier;
-			this.y += vy*hitRatio*modifier;
-			return true;
+			//this.hitVector = closestVector.normalize();
+			//this.beenHit = true;
+			//this.x += vx*hitRatio*modifier;
+			//this.y += vy*hitRatio*modifier;
+			return new Hit<Line>(line, closestVector.normalize(), hitRatio*modifier);
 		}
 		
-		return false;
+		return null;
 	}
 	
 	/** Test if this circle has collided with another circle */
@@ -235,14 +235,14 @@ class Circle extends starling.display.Image {
 		var dirVector = Vector.getVector(this.getX(),this.getY(),other.getX(),other.getY());
 		
 		// No velocity || not moving towards each other, no need to compute
-		if(regVector.mag == 0 || regVector.dot(dirVector) <= 0)
+		if(regVector.getMag() == 0 || regVector.dot(dirVector) <= 0)
 			return false;
 		
 		// Get the normalized dot product of the two vectors
 		var dotDist = regVector.normalize().dot( dirVector );
 		
 		// Gets the shortest distance between the two vectors
-		var shortestDist = Math.sqrt(dirVector.mag*dirVector.mag - dotDist*dotDist);
+		var shortestDist = Math.sqrt(dirVector.getMag()*dirVector.getMag() - dotDist*dotDist);
 		
 		// Calculate the sum of the radii
 		var totRadius = this.radius + other.radius;
@@ -260,8 +260,8 @@ class Circle extends starling.display.Image {
 		regVector.multiply(dotDist - subtractDist);
 		
 		// If the magnitude of the new regVector is less than the old one... we have a hit!!!
-		if(regVector.mag <= origVector.mag){
-			var hitPosition = regVector.mag / origVector.mag;
+		if(regVector.getMag() <= origVector.getMag()){
+			var hitPosition = regVector.getMag() / origVector.getMag();
 			
 			this.x += this.vx*modifier*hitPosition;
 			this.y += this.vy*modifier*hitPosition;
@@ -297,22 +297,20 @@ class Circle extends starling.display.Image {
 	}
 	
 	/** Recalculates the velocities so it bounces about the point of impact */
-	public function hitBounce(){
-		if(beenHit){
-			hitVector = hitVector.getPerpendicular();
-			var velVector = new Vector(vx,vy);
-			velVector = hitVector.multiply(2* hitVector.dot(velVector)).subtract(velVector);
-			vx = velVector.vx;
-			vy = velVector.vy;
-		}
+	public function hitBounce(hitVector:Vector){
+		hitVector = hitVector.getPerpendicular();
+		var velVector = new Vector(vx,vy);
+		velVector = hitVector.multiply(2* hitVector.dot(velVector)).subtract(velVector);
+		vx = velVector.vx;
+		vy = velVector.vy;
 	}
 	
 	/** Recalculates the velocities so it slides about the point of impact */
 	public function hitSlide(){
 		if(beenHit){
 			var velVector = new Vector(vx,vy);
-			var p1Vector = hitVector.getPerpendicular().normalize().multiply( velVector.mag );
-			var p2Vector = hitVector.getPerpendicular().getOpposite().normalize().multiply( velVector.mag );
+			var p1Vector = hitVector.getPerpendicular().normalize().multiply( velVector.getMag() );
+			var p2Vector = hitVector.getPerpendicular().getOpposite().normalize().multiply( velVector.getMag() );
 			
 			if(p1Vector.dot(velVector) > p2Vector.dot(velVector)){
 				vx = p1Vector.vx;

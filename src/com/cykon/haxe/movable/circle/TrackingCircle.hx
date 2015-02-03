@@ -45,8 +45,7 @@ class TrackingCircle extends DespawningCircle {
 			angle = angle/Math.abs(angle) * maxAngle;
 		}
 		
-		var nigmag = thisVector.mag;
-		thisVector = thisVector.rotate(angle).normalize().multiply(nigmag+0.01);
+		thisVector = thisVector.rotate(angle).normalize().multiply(thisVector.getMag()+0.01);
 		
 		vx = thisVector.vx;
 		vy = thisVector.vy;
