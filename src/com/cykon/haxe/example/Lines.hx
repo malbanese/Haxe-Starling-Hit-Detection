@@ -41,6 +41,7 @@ class Lines extends starling.display.Sprite {
 	var spawnX:Float;
 	var spawnY:Float;
 	
+	var _player:Circle;
 	var player:Circle;
 	var line:Line;
 	
@@ -53,6 +54,7 @@ class Lines extends starling.display.Sprite {
 	/** Function used to load in any assets to be used during the game */
 	private function populateAssetManager() {
 		assets.enqueue("../assets/circle.png");
+		assets.enqueue("../assets/circle2.png");
 		assets.loadQueue(function(percent){
 			// Ideally we would have some feedback here (loading screen)
 			
@@ -72,6 +74,7 @@ class Lines extends starling.display.Sprite {
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {
 		player = new Circle( assets.getTexture("circle"), 100, 100, 25 );
+		_player = new Circle( assets.getTexture("circle2"), 100, 100, 25 );
 		player.setVelocity(0,0);
 		
 		line = Line.getLine(400,300,200,400);
@@ -80,6 +83,7 @@ class Lines extends starling.display.Sprite {
 		
 		addChild(lineDisplay);
 		addChild(player);
+		addChild(_player);
 		
 		trace("<CLICK> to set circle starting position");
 		trace("<SPACE> to shoot circle towards mouse cursor");
@@ -112,7 +116,7 @@ class Lines extends starling.display.Sprite {
 		// Create a modifier based on time passed / expected time
 		var modifier = (event == null) ? 1.0 : event.passedTime / perfectDeltaTime;
 		
-		player.applyVelocity(modifier);
+		
 		
 		if(player.lineHit(line, modifier)){
 			trace("HIT");
@@ -132,6 +136,8 @@ class Lines extends starling.display.Sprite {
 			addChild(V1);
 			addChild(V2);
 		}
+		
+		player.applyVelocity(modifier);
 	}
 	
 	/** Used to detect clicks */
@@ -140,6 +146,7 @@ class Lines extends starling.display.Sprite {
 		if(touch.phase == "ended"){
 			spawnX = touch.globalX;
 			spawnY = touch.globalY;
+			_player.setLoc(spawnX,spawnY);
 		}
 		
 		mouseX = touch.globalX;
@@ -150,9 +157,15 @@ class Lines extends starling.display.Sprite {
 	private function keyUp(event:KeyboardEvent):Void{
 	}
 	
+	var useRecorded = false;
+	var recorded = {x:189.0,y:243.0,vx:4.82860975888604, vy:4.82860975888604};
 	var zeroVel = false;
 	/** Used to keep track when a key is pressed */
 	private function keyDown(event:KeyboardEvent){
+		if(event.keyCode == 72){
+			useRecorded = !useRecorded;
+			trace("RECORDING: " + useRecorded);
+		}
 		if(event.keyCode == 71){
 			running = !running;
 		}
@@ -162,6 +175,7 @@ class Lines extends starling.display.Sprite {
 			zeroVel = !zeroVel;
 			trace(zeroVel);
 		}
+
 		if(event.keyCode == 32){
 			running = true;
 			haxe.Log.clear();
@@ -170,6 +184,16 @@ class Lines extends starling.display.Sprite {
 			var vector = Vector.getVector(player.getX(), player.getY(), mouseX, mouseY);
 			vector.normalize().multiply(10);
 			player.setVelocity(vector.vx, vector.vy);
+			
+			if(useRecorded){
+				player.setLoc(recorded.x, recorded.y);
+				player.setVelocity(recorded.vx, recorded.vy);
+			}
+			
+			recorded = {x:player.getX(), y:player.getY(), vx:player.getVX(), vy:player.getVY()};
+			
+			trace(player.getX() + " " + player.getY());
+			trace(player.getVX() + " " + player.getVX());
 		}
 	}
 	

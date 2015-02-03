@@ -160,6 +160,7 @@ class Circle extends starling.display.Image {
 		// Get the closest vector between the circle and the line
 		var closestMag = closestVector.multiply(closestVector.dot(pointVector)).mag;
 		
+		// trace(closestMag);
 		// The circle is moving away from the line, and we are more than radius away
 		if(movingAway && closestMag > radius)
 			return false;
@@ -168,11 +169,10 @@ class Circle extends starling.display.Image {
 		closestVector.normalize().multiply( closestVector.dot(thisVector) );
 		
 		// Get the hit ratio, to correct thisVector with
-		var hitRatio = (closestMag - radius - 1) / closestVector.mag;
-		
-		
+		var hitRatio = (closestMag - radius) / closestVector.mag;
+	
 		// We have a hit, but still need to check if we hit within the line's bounds
-		if(hitRatio < 1.0){
+		if(hitRatio <= 1.0){
 			// New (x,y) positions
 			var nx = getX() + vx*hitRatio*modifier;
 			var ny = getY() + vy*hitRatio*modifier;
@@ -202,11 +202,11 @@ class Circle extends starling.display.Image {
 					
 				// Using radius, find our new hit ratio
 				var hitMag = Math.sqrt(radius*radius - dotMag*dotMag);
-				hitRatio = (newVector.mag - hitMag - 1) / thisVector.mag;
+				hitRatio = (newVector.mag - hitMag) / thisVector.mag - 0.05;
 			}
 			
 			// Re-check the hitRatio after dealing with endpoints (or not)
-			if(hitRatio < 0 || hitRatio > 1.0)
+			if(hitRatio < 0 || hitRatio >= 1.0)
 				return false;
 			
 			this.hitVector = closestVector.normalize();
