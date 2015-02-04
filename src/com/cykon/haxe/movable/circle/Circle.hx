@@ -24,13 +24,17 @@ class Circle extends starling.display.Image {
 	var ax:Float = 0;  	// X Acceleration
 	var ay:Float = 0;	// Y Acceleration
 	
-	public var beenHit:Bool = false;  // Tells the updateVelocity method whether we can move or not
+	var processingHit:Bool = false;  // Tells the updateVelocity method whether we can move or not
 	var hitVector:Vector;	   // The normal vector representing a wall which was hit
 	var leftoverMag:Float = 0; // The leftover magnitude from the last hit;
 	var massMod = 1.0;		   // Modifier to change mass by...
 	
-	public function hasBeenHit() : Bool {
-		return beenHit;
+	public function setProcessingHit(processing:Bool){
+		processingHit = processing;
+	}
+	
+	public function isProcessingHit() : Bool {
+		return processingHit;
 	}
 	
 	/** Reterns whether or not there is leftoverMag from a hit */
@@ -84,6 +88,11 @@ class Circle extends starling.display.Image {
 		this.y = y - radius;
 	}
 	
+	/** Gets the magnitude of the circle's velocities */
+	public function getMag():Float{
+		return Math.sqrt(vx*vx+vy*vy);
+	}
+	
 	/** Set the velocities of the circle */
 	public function setVelocity(vx:Float, vy:Float){
 		this.vx = vx;
@@ -105,10 +114,14 @@ class Circle extends starling.display.Image {
 	/** Applies the velocities of the circle to the x & y coordinates */
 	public function applyVelocity(modifier:Float):Bool{
 		leftoverMag = 0;
-		if(beenHit){
+		
+		if(processingHit)
+			return false;
+			
+		/*if(beenHit){
 			beenHit = false;
 			return false;
-		}
+		}*/
 
 		var movVector = new Vector(vx,vy).multiply(modifier);
 		if(leftoverMag <= 0)
@@ -210,6 +223,8 @@ class Circle extends starling.display.Image {
 				// Find the distance when the circle will be closest to the point
 				var dotMag = Math.sqrt( closestVector.getMag()*closestVector.getMag() - newVector.getMag()*newVector.getMag() );
 				
+				var radius = this.radius + 0.1; // A little hack lets us avoid nasty fpoint rounding errors
+				
 				// Hit is impossible if the shortest distance is bigger than the radius
 				if(radius <= dotMag)
 					return null;
@@ -220,14 +235,10 @@ class Circle extends starling.display.Image {
 			}
 			
 			// Re-check the hitRatio after dealing with endpoints (or not)
-			if(hitRatio < 0 || hitRatio >= 1.0)
+			if(hitRatio < -0.0001 || hitRatio >= 1.0)
 				return null;
 			
-			//this.hitVector = closestVector.normalize();
-			//this.beenHit = true;
-			//this.x += vx*hitRatio*modifier;
-			//this.y += vy*hitRatio*modifier;
-			return new Hit<Line>(line, closestVector.normalize(), hitRatio*modifier);
+			return new Hit<Line>(line, closestVector.normalize(), hitRatio*modifier - 0.00001);
 		}
 		
 		return null;
@@ -282,7 +293,7 @@ class Circle extends starling.display.Image {
 			other.x += other.vx*modifier*hitPosition;
 			other.y += other.vy*modifier*hitPosition;
 			
-			this.beenHit = other.beenHit = true;		
+			//this.beenHit = other.beenHit = true;		
 			this.hitVector = Vector.getVector(getX(),getY(),other.getX(),other.getY()).normalize();
 			other.hitVector = this.hitVector.clone();	
 			
@@ -324,18 +335,18 @@ class Circle extends starling.display.Image {
 	}
 	
 	/** Recalculates the velocities so it slides about the point of impact */
-	public function hitSlide(hitVector:Vector){
+	public function hitSlide(hitVector:Vector, energyLoss:Float = 0){
 		var velVector = new Vector(vx,vy);
 		var p1Vector = hitVector.getPerpendicular().normalize().multiply( velVector.getMag() );
 		var p2Vector = hitVector.getPerpendicular().getOpposite().normalize().multiply( velVector.getMag() );
+		
+		velVector = (p1Vector.dot(velVector) > p2Vector.dot(velVector)) ? p1Vector : p2Vector;
+		
+		if(energyLoss > 0)
+			velVector.multiply(1.0 - energyLoss);
 			
-		if(p1Vector.dot(velVector) > p2Vector.dot(velVector)){
-			vx = p1Vector.vx;
-			vy = p1Vector.vy;
-		} else {
-			vx = p2Vector.vx;
-			vy = p2Vector.vy;
-		}
+		vx = velVector.vx;
+		vy = velVector.vy;
 	}
 	
 	public function new(texture:Texture, x:Float, y:Float, radius:Float){

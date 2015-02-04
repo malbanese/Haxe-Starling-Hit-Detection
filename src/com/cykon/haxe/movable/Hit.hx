@@ -14,7 +14,7 @@ class Hit<T> {
 	var hitObject:T;
 	
 	public function getHitVector():Vector{
-		return hitVector;
+		return hitVector.clone();
 	}
 	
 	public function getVMod():Float{

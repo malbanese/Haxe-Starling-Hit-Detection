@@ -46,6 +46,13 @@ class Lines extends starling.display.Sprite {
 	var player:Circle;
 	var basicCollider:CLCollider;
 	
+	var displayVectors = true;
+	var V1:Shape;
+	var V2:Shape;
+	var hitType = true;
+	var L1:Line = null;
+	var hlDisplay:LineDisplay;
+	
 	// Simple constructor
     public function new() {
         super();
@@ -69,7 +76,7 @@ class Lines extends starling.display.Sprite {
 		startGame();
 	}
 	
-	var L1:Line;
+	
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {
 		player = new Circle( assets.getTexture("circle2"), 100, 100, 25 );
@@ -94,14 +101,17 @@ class Lines extends starling.display.Sprite {
 		
 		basicCollider = new CLCollider();
 		var lineDisplay = new LineDisplay(2,0,1);
+		hlDisplay = new LineDisplay(2,0xFF0000,1);
 		
 		basicCollider.addLines(a_Line);
 		lineDisplay.addLines(a_Line);
 		
+		
 		addChild(lineDisplay);
 		addChild(player);
+		addChild(hlDisplay);
 		
-		trace("<CLICK> to set circle starting position");
+		trace("<CLICK> to set circle position.");
 		trace("<SPACE> to shoot circle towards mouse cursor");
 		trace("<F> to change hit response.");
 		trace("<G> to pause");
@@ -129,22 +139,45 @@ class Lines extends starling.display.Sprite {
 		// Create a modifier based on time passed / expected time
 		var modifier = (event == null) ? 1.0 : event.passedTime / perfectDeltaTime;
 		
-		basicCollider.iterativeHitTest(player, 1, playerLineHit, playerLineMiss, modifier);
+		if(V1 != null){
+			V1.removeFromParent();
+			V1.dispose();
+		}
+	
+		basicCollider.iterativeHitTest(player, playerLineHit, playerLineMiss, modifier);
 		player.applyAcceleration();
+		
+		if(!running)
+			return;
+			
+		V1 = VectorDisplay.display(new Vector(player.getVX(), player.getVY()).multiply(5), player.getX(), player.getY(), 2, 0);
+
+		if(displayVectors){
+			addChild(V1);
+		}
 	}
 	
 	private function playerLineMiss(player:Circle, modifier:Float){
 		player.applyVelocity(modifier);
 	}
 	
-	var hitType = true;
+	
 	private function playerLineHit(player:Circle, hit:Hit<Line>){
-		player.applyVelocity(hit.getVMod() - 0.025);
+		
+		if(L1 != null)
+			hlDisplay.remove(L1);
+		
+		L1 = hit.getHitObject();
+		hlDisplay.add( L1 );
+		
+		player.applyVelocity(hit.getVMod());
 		
 		if(hitType)
-			player.hitBounce(hit.getHitVector(),0.2);
+			player.hitBounce(hit.getHitVector(),0.01);
 		else
-			player.hitSlide(hit.getHitVector());
+			player.hitSlide(hit.getHitVector(), 0.05);
+		
+		//running = false;
 	}
 	
 	/** Used to detect clicks */
@@ -153,6 +186,8 @@ class Lines extends starling.display.Sprite {
 		if(touch.phase == "ended"){
 			spawnX = touch.globalX;
 			spawnY = touch.globalY;
+			player.setLoc(spawnX,spawnY);
+			player.setVelocity(0,0);
 		}
 		
 		mouseX = touch.globalX;
@@ -176,11 +211,15 @@ class Lines extends starling.display.Sprite {
 			running = !running;
 			trace(running ? "Running." : "Paused.");
 		}
+		
+		if(event.keyCode == 72){
+			displayVectors = !displayVectors;
+		}
 
 		if(event.keyCode == 32){
 			running = true;
 			haxe.Log.clear();
-			player.setLoc(spawnX,spawnY);
+			//player.setLoc(spawnX,spawnY);
 			
 			var vector = Vector.getVector(player.getX(), player.getY(), mouseX, mouseY);
 			vector.normalize().multiply(10);
