@@ -110,7 +110,7 @@ class Circle extends starling.display.Image {
 	public function applyAcceleration():Bool{
 		if(processingHit)
 			return false;
-			
+		
 		this.vx += ax;
 		this.vy += ay;
 		return true;
@@ -162,7 +162,7 @@ class Circle extends starling.display.Image {
 	}
 	 
 	
-	var V1:Shape = null;
+	
 	/** Test if this circle has collided with a line */
 	public function lineHit( line : Line, modifier : Float = 1.0 ): Hit<Line> {
 		// No movement = no need to compute
@@ -242,7 +242,6 @@ class Circle extends starling.display.Image {
 				// On the real though, if we are heading towards the line, yet inside of the line by < 20%
 				// We should use the line's normal to bounce us back. Needs more testing. Seems to work.
 				
-				trace("derp");
 				normVector.multiply(radius+1 - closestMag);
 				this.x += normVector.vx;
 				this.y += normVector.vy;
@@ -352,16 +351,18 @@ class Circle extends starling.display.Image {
 	}
 	
 	/** Recalculates the velocities so it slides about the point of impact */
-	public function hitSlide(hitVector:Vector, energyLoss:Float = 0){
+	public function hitSlide(hitVector:Vector, energyLoss:Float = 0, onto:Bool = true){
 		var velVector = new Vector(vx,vy);
 		var p1Vector = hitVector.getPerpendicular().normalize().multiply( velVector.getMag() );
 		var p2Vector = hitVector.getPerpendicular().getOpposite().normalize().multiply( velVector.getMag() );
 		
-		velVector = (p1Vector.dot(velVector) > p2Vector.dot(velVector)) ? p1Vector : p2Vector;
-		
+		if(!onto)
+			velVector = (p1Vector.dot(velVector) > p2Vector.dot(velVector)) ? p1Vector : p2Vector;
+		else
+			velVector = (p1Vector.dot(velVector) > p2Vector.dot(velVector)) ? velVector.onto(p1Vector) : velVector.onto(p2Vector);
+			
 		if(energyLoss > 0)
 			velVector.multiply(1.0 - energyLoss);
-		
 		
 		vx = velVector.vx;
 		vy = velVector.vy;

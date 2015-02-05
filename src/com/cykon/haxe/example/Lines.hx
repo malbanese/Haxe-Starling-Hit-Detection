@@ -47,7 +47,7 @@ class Lines extends starling.display.Sprite {
 	var basicCollider:CLCollider;
 	
 	var hitPause = true;
-	var displayVectors = true;
+	var displayVectors = false;
 	var V1:Shape;
 	var V2:Shape;
 	var hitType = true;
@@ -148,6 +148,7 @@ class Lines extends starling.display.Sprite {
 		V1 = VectorDisplay.display(new Vector(player.getVX(), player.getVY()).multiply(1), player.getX(), player.getY(), 2, 0);
 		
 		basicCollider.iterativeHitTest(player, playerLineHit, playerLineMiss, modifier);
+		player.applyAcceleration();
 		
 		if(displayVectors){
 			addChild(V1);
@@ -159,9 +160,7 @@ class Lines extends starling.display.Sprite {
 	
 	private function playerLineMiss(player:Circle, modifier:Float){
 		player.applyVelocity(modifier);
-		player.applyAcceleration();
 	}
-	
 	
 	private function playerLineHit(player:Circle, hit:Hit<Line>){
 		
@@ -175,7 +174,7 @@ class Lines extends starling.display.Sprite {
 		if(hitType)
 			player.hitBounce(hit.getHitVector(),0.1);
 		else
-			player.hitSlide(hit.getHitVector(),0.005);
+			player.hitSlide(hit.getHitVector());
 		
 		if(!hitPause)
 			running = false;
@@ -225,7 +224,7 @@ class Lines extends starling.display.Sprite {
 		if(event.keyCode == 32){
 			running = true;
 			var vector = Vector.getVector(player.getX(), player.getY(), mouseX, mouseY);
-			vector.normalize().multiply(10);
+			vector.normalize().multiply(5);
 			player.setVelocity(vector.vx, vector.vy);
 		}
 	}
