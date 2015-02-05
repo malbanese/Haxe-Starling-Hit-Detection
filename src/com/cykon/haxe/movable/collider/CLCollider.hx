@@ -20,20 +20,16 @@ class CLCollider extends List<Line> {
 		
 		var workingMod = modifier;
 		
-		while(maxIter-- != 0){
+		while(maxIter-- != 0 && workingMod > 0){
 			hit = hitTest(circle, null, modifier);
 			
-			if(hit == null || (workingMod -= hit.getVMod()) <= 0){
+			if(hit == null){
 				missCallback(circle, workingMod);
 				return;
 			}
 			
+			workingMod -= hit.getVMod();		
 			hitCallback(circle, hit);
-		}
-		
-		// Check if we're stuck
-		if(modifier/workingMod >= .99){
-			circle.setVelocity(0,0);
 		}
 	}
 	

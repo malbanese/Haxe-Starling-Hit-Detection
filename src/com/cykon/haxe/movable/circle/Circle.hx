@@ -242,6 +242,7 @@ class Circle extends starling.display.Image {
 				// On the real though, if we are heading towards the line, yet inside of the line by < 20%
 				// We should use the line's normal to bounce us back. Needs more testing. Seems to work.
 				
+				trace("derp");
 				normVector.multiply(radius+1 - closestMag);
 				this.x += normVector.vx;
 				this.y += normVector.vy;
