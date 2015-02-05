@@ -238,9 +238,8 @@ class Circle extends starling.display.Image {
 				hitRatio = (newVector.getMag() - hitMag) / thisVector.getMag();
 			}
 			
-			//trace(hitRatio);
 			// Re-check the hitRatio after dealing with endpoints (or not)
-			if(hitRatio < 0 || hitRatio >= 1.0)
+			if(hitRatio < -0.001 || hitRatio >= 1.0)
 				return null;
 			
 			return new Hit<Line>(line, closestVector.normalize(), hitRatio*modifier - 0.00001);

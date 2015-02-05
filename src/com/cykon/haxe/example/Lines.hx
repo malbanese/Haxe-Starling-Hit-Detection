@@ -175,7 +175,7 @@ class Lines extends starling.display.Sprite {
 		if(hitType)
 			player.hitBounce(hit.getHitVector(), 0.1);
 		else
-			player.hitSlide(hit.getHitVector());
+			player.hitSlide(hit.getHitVector(), 0.01);
 		
 		if(!hitPause)
 			running = false;
@@ -201,7 +201,8 @@ class Lines extends starling.display.Sprite {
 	
 	/** Used to keep track when a key is pressed */
 	private function keyDown(event:KeyboardEvent){
-		haxe.Log.clear();
+		if(event.keyCode != 71)
+			haxe.Log.clear();
 		
 		if(event.keyCode == 70){
 			hitType = !hitType;
@@ -215,6 +216,10 @@ class Lines extends starling.display.Sprite {
 		
 		if(event.keyCode == 72){
 			displayVectors = !displayVectors;
+		}
+			
+		if(event.keyCode == 74){
+			player.setVelocity(0,0);
 		}
 
 		if(event.keyCode == 32){
