@@ -15,6 +15,7 @@ import com.cykon.haxe.movable.line.Line;
 import com.cykon.haxe.cmath.Vector;
 import com.cykon.haxe.util.VectorDisplay;
 import starling.textures.Texture;
+import starling.display.Shape;
 
 class Circle extends starling.display.Image {
 
@@ -121,11 +122,6 @@ class Circle extends starling.display.Image {
 		
 		if(processingHit)
 			return false;
-			
-		/*if(beenHit){
-			beenHit = false;
-			return false;
-		}*/
 
 		var movVector = new Vector(vx,vy).multiply(modifier);
 		if(leftoverMag <= 0)
@@ -165,6 +161,8 @@ class Circle extends starling.display.Image {
 			  || YBound[1] < yBound[0]);
 	}
 	 
+	
+	var V1:Shape = null;
 	/** Test if this circle has collided with a line */
 	public function lineHit( line : Line, modifier : Float = 1.0 ): Hit<Line> {
 		// No movement = no need to compute
@@ -177,10 +175,13 @@ class Circle extends starling.display.Image {
 		var pointVector = Vector.getVector(this.getX(), this.getY(), line.getP1().x, line.getP1().y);
 		
 		// Preliminary check to make sure that the circle is going towards the line
-		var closestVector = line.getNorm();
-		if(closestVector.dot(pointVector) >  0){
-			closestVector = closestVector.getOpposite();
+		var normVector = line.getNorm();
+		if(normVector.dot(pointVector) >  0){
+			normVector = normVector.getOpposite();
 		}
+		
+		// Define the closest vector to work with
+		var closestVector = normVector.clone();
 		
 		// In this case, the circle is moving away from the line
 		var movingAway = false;
@@ -191,7 +192,7 @@ class Circle extends starling.display.Image {
 		// Get the closest vector between the circle and the line
 		var closestMag = closestVector.multiply(closestVector.dot(pointVector)).getMag();
 		
-		// trace(closestMag);
+		
 		// The circle is moving away from the line, and we are more than radius away
 		if(movingAway && closestMag > radius)
 			return null;
@@ -201,7 +202,7 @@ class Circle extends starling.display.Image {
 		
 		// Get the hit ratio, to correct thisVector with
 		var hitRatio = (closestMag - radius) / closestVector.getMag();
-	
+		
 		// We have a hit, but still need to check if we hit within the line's bounds
 		if(hitRatio <= 1.0){
 			// New (x,y) positions
@@ -236,13 +237,24 @@ class Circle extends starling.display.Image {
 				// Using radius, find our new hit ratio
 				var hitMag = Math.sqrt(radius*radius - dotMag*dotMag);
 				hitRatio = (newVector.getMag() - hitMag) / thisVector.getMag();
+			} else if (closestMag+0.001 < radius && closestMag/radius > 0.80 && !movingAway) {
+				// Time for the hacky fix... lets say we somehow bump through a line, what do? I'll tell you!	
+				// On the real though, if we are heading towards the line, yet inside of the line by < 20%
+				// We should use the line's normal to bounce us back. Needs more testing. Seems to work.
+				
+				normVector.multiply(radius+1 - closestMag);
+				this.x += normVector.vx;
+				this.y += normVector.vy;
+				
+				return null;
 			}
 			
+			hitRatio -= 0.000000000001;
 			// Re-check the hitRatio after dealing with endpoints (or not)
 			if(hitRatio < -0.001 || hitRatio >= 1.0)
 				return null;
 			
-			return new Hit<Line>(line, closestVector.normalize(), hitRatio*modifier - 0.00001);
+			return new Hit<Line>(line, closestVector.normalize(), hitRatio*modifier);
 		}
 		
 		return null;
@@ -348,7 +360,8 @@ class Circle extends starling.display.Image {
 		
 		if(energyLoss > 0)
 			velVector.multiply(1.0 - energyLoss);
-			
+		
+		
 		vx = velVector.vx;
 		vy = velVector.vy;
 	}

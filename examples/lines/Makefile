@@ -13,6 +13,10 @@ run:
 	make
 	cygstart bin/Lines.swf
 
+runkill:
+	taskkill /f /IM FlashPlayer16Debug.exe /fi "memusage gt 2"
+	make run
+
 clean:
 	rm bin/Lines.swf
 	mkdir -p bin

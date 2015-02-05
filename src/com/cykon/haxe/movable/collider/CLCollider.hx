@@ -15,19 +15,25 @@ import com.cykon.haxe.movable.circle.Circle;
 class CLCollider extends List<Line> {
 	
 	public function iterativeHitTest(circle:Circle, hitCallback:Circle->Hit<Line>->Void, missCallback:Circle->Float->Void, modifier:Float, maxIter:Int = 5){
+		//haxe.Log.clear();
 		var hit:Hit<Line> = null;
 		
 		var workingMod = modifier;
 		
 		while(maxIter-- != 0){
-			hit = hitTest(circle, hitCallback, modifier);
+			hit = hitTest(circle, null, modifier);
 			
-			if(modifier <= 0 || hit == null){
+			if(hit == null || (workingMod -= hit.getVMod()) <= 0){
 				missCallback(circle, workingMod);
 				return;
 			}
 			
-			workingMod -= hit.getVMod();
+			hitCallback(circle, hit);
+		}
+		
+		// Check if we're stuck
+		if(modifier/workingMod >= .99){
+			circle.setVelocity(0,0);
 		}
 	}
 	
@@ -36,16 +42,15 @@ class CLCollider extends List<Line> {
 		
 		for(line in this){
 			var hit:Hit<Line> = circle.lineHit(line, modifier);
-				
+			
 			if(hit != null && closestHit == null || hit != null && hit.getVMod() <= closestHit.getVMod()){
 				closestHit = hit;
-				
 				if(returnFirst)
 					break;
 			}
 		}
 		
-		if(closestHit != null)
+		if(closestHit != null && hitCallback != null)
 			hitCallback(circle, closestHit);
 		
 		return closestHit;

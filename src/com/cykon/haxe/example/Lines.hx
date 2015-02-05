@@ -173,9 +173,9 @@ class Lines extends starling.display.Sprite {
 		player.applyVelocity(hit.getVMod());
 		
 		if(hitType)
-			player.hitBounce(hit.getHitVector(), 0.1);
+			player.hitBounce(hit.getHitVector(),0.1);
 		else
-			player.hitSlide(hit.getHitVector(), 0.01);
+			player.hitSlide(hit.getHitVector(),0.005);
 		
 		if(!hitPause)
 			running = false;
@@ -225,7 +225,7 @@ class Lines extends starling.display.Sprite {
 		if(event.keyCode == 32){
 			running = true;
 			var vector = Vector.getVector(player.getX(), player.getY(), mouseX, mouseY);
-			vector.normalize().multiply(1);
+			vector.normalize().multiply(10);
 			player.setVelocity(vector.vx, vector.vy);
 		}
 	}
