@@ -106,9 +106,13 @@ class Circle extends starling.display.Image {
 	}
 	
 	/** Applies the acceleration of the circle to it's velocities */
-	public function applyAcceleration(){
+	public function applyAcceleration():Bool{
+		if(processingHit)
+			return false;
+			
 		this.vx += ax;
 		this.vy += ay;
+		return true;
 	}
 	
 	/** Applies the velocities of the circle to the x & y coordinates */
@@ -234,8 +238,9 @@ class Circle extends starling.display.Image {
 				hitRatio = (newVector.getMag() - hitMag) / thisVector.getMag();
 			}
 			
+			//trace(hitRatio);
 			// Re-check the hitRatio after dealing with endpoints (or not)
-			if(hitRatio < -0.0001 || hitRatio >= 1.0)
+			if(hitRatio < 0 || hitRatio >= 1.0)
 				return null;
 			
 			return new Hit<Line>(line, closestVector.normalize(), hitRatio*modifier - 0.00001);

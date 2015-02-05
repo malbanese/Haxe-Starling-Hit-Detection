@@ -15,18 +15,20 @@ import com.cykon.haxe.movable.circle.Circle;
 class CLCollider extends List<Line> {
 	
 	public function iterativeHitTest(circle:Circle, hitCallback:Circle->Hit<Line>->Void, missCallback:Circle->Float->Void, modifier:Float, maxIter:Int = 5){
-		circle.setProcessingHit(true);
-		
 		var hit:Hit<Line> = null;
-		while(maxIter-- != 0 || modifier > 0){
+		while(maxIter-- != 0){
 			hit = hitTest(circle, hitCallback, modifier);
 			
-			if(hit == null){
-				circle.setProcessingHit(false);
-				missCallback(circle, modifier);
+			if(modifier <= 0 || hit == null){
+				if(circle.isProcessingHit()){
+					circle.setProcessingHit(false);
+				} else {
+					missCallback(circle, modifier);
+				}
 				return;
 			}
 			
+			circle.setProcessingHit(true);
 			modifier -= hit.getVMod();
 		}
 	}

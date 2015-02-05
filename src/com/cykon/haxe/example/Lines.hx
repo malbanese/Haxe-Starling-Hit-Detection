@@ -46,6 +46,7 @@ class Lines extends starling.display.Sprite {
 	var player:Circle;
 	var basicCollider:CLCollider;
 	
+	var hitPause = true;
 	var displayVectors = true;
 	var V1:Shape;
 	var V2:Shape;
@@ -143,22 +144,25 @@ class Lines extends starling.display.Sprite {
 			V1.removeFromParent();
 			V1.dispose();
 		}
-	
-		basicCollider.iterativeHitTest(player, playerLineHit, playerLineMiss, modifier);
-		player.applyAcceleration();
 		
-		if(!running)
-			return;
-			
-		V1 = VectorDisplay.display(new Vector(player.getVX(), player.getVY()).multiply(5), player.getX(), player.getY(), 2, 0);
+		V1 = VectorDisplay.display(new Vector(player.getVX(), player.getVY()).multiply(1), player.getX(), player.getY(), 2, 0);
+		//player.setAcceleration(0,0);
+		basicCollider.iterativeHitTest(player, playerLineHit, playerLineMiss, modifier);
+		
+		
+		
 
 		if(displayVectors){
 			addChild(V1);
 		}
+		
+		if(!running)
+			return;
 	}
 	
 	private function playerLineMiss(player:Circle, modifier:Float){
 		player.applyVelocity(modifier);
+		//player.applyAcceleration();
 	}
 	
 	
@@ -166,18 +170,18 @@ class Lines extends starling.display.Sprite {
 		
 		if(L1 != null)
 			hlDisplay.remove(L1);
-		
 		L1 = hit.getHitObject();
 		hlDisplay.add( L1 );
 		
 		player.applyVelocity(hit.getVMod());
 		
 		if(hitType)
-			player.hitBounce(hit.getHitVector(),0.01);
+			player.hitBounce(hit.getHitVector());
 		else
-			player.hitSlide(hit.getHitVector(), 0.05);
+			player.hitSlide(hit.getHitVector());
 		
-		//running = false;
+		if(!hitPause)
+			running = false;
 	}
 	
 	/** Used to detect clicks */
@@ -218,9 +222,6 @@ class Lines extends starling.display.Sprite {
 
 		if(event.keyCode == 32){
 			running = true;
-			haxe.Log.clear();
-			//player.setLoc(spawnX,spawnY);
-			
 			var vector = Vector.getVector(player.getX(), player.getY(), mouseX, mouseY);
 			vector.normalize().multiply(10);
 			player.setVelocity(vector.vx, vector.vy);
