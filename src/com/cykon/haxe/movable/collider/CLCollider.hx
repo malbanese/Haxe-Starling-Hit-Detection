@@ -16,19 +16,20 @@ class CLCollider extends List<Line> {
 	
 	public function iterativeHitTest(circle:Circle, hitCallback:Circle->Hit<Line>->Void, missCallback:Circle->Float->Void, modifier:Float, maxIter:Int = 5){
 		var hit:Hit<Line> = null;
-		while(maxIter-- != 0){
+		while(modifier < 0 || maxIter-- != 0){
 			hit = hitTest(circle, hitCallback, modifier);
 			
-			if(modifier <= 0 || hit == null){
-				if(circle.isProcessingHit()){
+			if(modifier == 0 || hit == null){
+				/*if(circle.isProcessingHit()){
 					circle.setProcessingHit(false);
 				} else {
 					missCallback(circle, modifier);
-				}
+				}*/
+				
+				missCallback(circle, modifier);
 				return;
 			}
 			
-			circle.setProcessingHit(true);
 			modifier -= hit.getVMod();
 		}
 	}
