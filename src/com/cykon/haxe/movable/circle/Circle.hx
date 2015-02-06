@@ -25,10 +25,10 @@ class Circle extends starling.display.Image {
 	var ax:Float = 0;  	// X Acceleration
 	var ay:Float = 0;	// Y Acceleration
 	
-	var processingHit:Bool = false;  // Tells the updateVelocity method whether we can move or not
-	var hitVector:Vector;	   // The normal vector representing a wall which was hit
-	var leftoverMag:Float = 0; // The leftover magnitude from the last hit;
-	var massMod = 1.0;		   // Modifier to change mass by...
+	var processingHit:Bool = false; // Tells the updateVelocity method whether we can move or not
+	var hitVector:Vector;	   		// The normal vector representing a wall which was hit
+	var leftoverMag:Float = 0; 		// The leftover magnitude from the last hit;
+	var massMod = 1.0;		   		// Modifier to change mass by...
 	
 	public function setProcessingHit(processing:Bool){
 		processingHit = processing;
@@ -136,6 +136,11 @@ class Circle extends starling.display.Image {
 		leftoverMag = 0;
 		x += movVector.vx;
 		y += movVector.vy;
+		
+		// Apply acceleration
+		this.vx += ax;
+		this.vy += ay;
+		
 		return true;
 	}
 	
@@ -354,12 +359,8 @@ class Circle extends starling.display.Image {
 	public function hitSlide(hitVector:Vector, energyLoss:Float = 0, onto:Bool = true){
 		var velVector = new Vector(vx,vy);
 		var p1Vector = hitVector.getPerpendicular().normalize().multiply( velVector.getMag() );
-		var p2Vector = hitVector.getPerpendicular().getOpposite().normalize().multiply( velVector.getMag() );
-		
-		if(!onto)
-			velVector = (p1Vector.dot(velVector) > p2Vector.dot(velVector)) ? p1Vector : p2Vector;
-		else
-			velVector = (p1Vector.dot(velVector) > p2Vector.dot(velVector)) ? velVector.onto(p1Vector) : velVector.onto(p2Vector);
+
+		velVector = (!onto) ? p1Vector : velVector.onto(p1Vector);
 			
 		if(energyLoss > 0)
 			velVector.multiply(1.0 - energyLoss);

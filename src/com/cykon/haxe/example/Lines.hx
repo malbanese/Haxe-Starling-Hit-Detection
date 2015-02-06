@@ -43,14 +43,15 @@ class Lines extends starling.display.Sprite {
 	var spawnX:Float;
 	var spawnY:Float;
 	
-	var player:Circle;
+	
+	var pCircle:Circle;
+	var player:PlayerCircle;
 	var basicCollider:CLCollider;
 	
+	var hitType = true;
 	var hitPause = true;
 	var displayVectors = false;
-	var V1:Shape;
-	var V2:Shape;
-	var hitType = true;
+	
 	var L1:Line = null;
 	var hlDisplay:LineDisplay;
 	
@@ -80,9 +81,12 @@ class Lines extends starling.display.Sprite {
 	
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {
-		player = new Circle( assets.getTexture("circle2"), 100, 100, 25 );
-		player.setVelocity(0,0);
-		player.setAcceleration(0,0.25);
+		pCircle = new Circle( assets.getTexture("circle2"), 100, 100, 25 );
+		pCircle.setAcceleration(0,0.25);
+		pCircle.setVelocity(0,0);
+		
+		player = new PlayerCircle( assets.getTexture("circle"), 200, 100, 15, 10);
+		//player.setAcceleration(0,0.25);
 		
 		var hlen = 300;
 		var vlen = 200;
@@ -107,9 +111,9 @@ class Lines extends starling.display.Sprite {
 		basicCollider.addLines(a_Line);
 		lineDisplay.addLines(a_Line);
 		
-		
-		addChild(lineDisplay);
 		addChild(player);
+		addChild(pCircle);
+		addChild(lineDisplay);
 		addChild(hlDisplay);
 		
 		trace("<CLICK> to set circle position.");
@@ -140,41 +144,27 @@ class Lines extends starling.display.Sprite {
 		// Create a modifier based on time passed / expected time
 		var modifier = (event == null) ? 1.0 : event.passedTime / perfectDeltaTime;
 		
-		if(V1 != null){
-			V1.removeFromParent();
-			V1.dispose();
-		}
-		
-		V1 = VectorDisplay.display(new Vector(player.getVX(), player.getVY()).multiply(1), player.getX(), player.getY(), 2, 0);
-		
-		basicCollider.iterativeHitTest(player, playerLineHit, playerLineMiss, modifier);
-		player.applyAcceleration();
-		
-		if(displayVectors){
-			addChild(V1);
-		}
-		
-		if(!running)
-			return;
+		basicCollider.iterativeHitTest(pCircle, circleLineHit, circleLineMiss, modifier);
+		basicCollider.iterativeHitTest(player, circleLineHit, circleLineMiss, modifier);
 	}
 	
-	private function playerLineMiss(player:Circle, modifier:Float){
-		player.applyVelocity(modifier);
+	private function circleLineMiss(circle:Circle, modifier:Float){
+		circle.applyVelocity(modifier);
 	}
 	
-	private function playerLineHit(player:Circle, hit:Hit<Line>){
+	private function circleLineHit(circle:Circle, hit:Hit<Line>){
 		
 		if(L1 != null)
 			hlDisplay.remove(L1);
 		L1 = hit.getHitObject();
 		hlDisplay.add( L1 );
 		
-		player.applyVelocity(hit.getVMod());
+		circle.applyVelocity(hit.getVMod());
 		
-		if(hitType)
-			player.hitBounce(hit.getHitVector(),0.1);
+		if(hitType && circle != player)
+			circle.hitBounce(hit.getHitVector(),0.1);
 		else
-			player.hitSlide(hit.getHitVector());
+			circle.hitSlide(hit.getHitVector());
 		
 		if(!hitPause)
 			running = false;
@@ -186,8 +176,8 @@ class Lines extends starling.display.Sprite {
 		if(touch.phase == "ended"){
 			spawnX = touch.globalX;
 			spawnY = touch.globalY;
-			player.setLoc(spawnX,spawnY);
-			player.setVelocity(0,0);
+			pCircle.setLoc(spawnX,spawnY);
+			pCircle.setVelocity(0,0);
 		}
 		
 		mouseX = touch.globalX;
@@ -196,12 +186,15 @@ class Lines extends starling.display.Sprite {
 	
 	/** Used to keep track of when a key is unpressed */
 	private function keyUp(event:KeyboardEvent):Void{
+		player.keyUp(event.keyCode);
 	}
 	
 	/** Used to keep track when a key is pressed */
 	private function keyDown(event:KeyboardEvent){
-		if(event.keyCode != 71)
-			haxe.Log.clear();
+		player.keyDown(event.keyCode);
+		
+		//if(event.keyCode != 71)
+		//	haxe.Log.clear();
 		
 		if(event.keyCode == 70){
 			hitType = !hitType;
@@ -218,14 +211,14 @@ class Lines extends starling.display.Sprite {
 		}
 			
 		if(event.keyCode == 74){
-			player.setVelocity(0,0);
+			pCircle.setVelocity(0,0);
 		}
 
 		if(event.keyCode == 32){
 			running = true;
-			var vector = Vector.getVector(player.getX(), player.getY(), mouseX, mouseY);
-			vector.normalize().multiply(5);
-			player.setVelocity(vector.vx, vector.vy);
+			var vector = Vector.getVector(pCircle.getX(), pCircle.getY(), mouseX, mouseY);
+			vector.normalize().multiply(10);
+			pCircle.setVelocity(vector.vx, vector.vy);
 		}
 	}
 	

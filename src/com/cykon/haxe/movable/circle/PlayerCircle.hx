@@ -40,14 +40,27 @@ class PlayerCircle extends Circle {
 		this.angleSpeed = Math.sqrt((moveSpeed*moveSpeed)/2);
 	}
 	
+	private function isBound( keyCode : Int ) : Bool {
+		return (keyCode == K_UP || keyCode == K_LEFT || keyCode == K_DOWN || keyCode == K_RIGHT);
+	}
+	
 	/** Function to be called when a particular key is pressed down */
 	public function keyDown( keyCode : Int ){
+		if(!isBound(keyCode))
+			return;
+			
+		if(keyMap.get(keyCode))
+			return;
+			
 		keyMap.set(keyCode, true);
 		updateVelocity();
 	}
 	
 	/** Function to be called when a particular key is unpressed */
 	public function keyUp( keyCode : Int ){
+		if(!isBound(keyCode))
+			return;
+			
 		keyMap.set(keyCode, false);
 		updateVelocity();
 	}
@@ -77,10 +90,8 @@ class PlayerCircle extends Circle {
 	
 	public override function applyVelocity(modifier:Float):Bool{
 		if(isAlive){
-			var applied = super.applyVelocity(modifier);
-			if(applied){
-				updateVelocity();
-			}			
+			var applied = super.applyVelocity(modifier);		
+			updateVelocity();
 			return applied;
 		}
 		
