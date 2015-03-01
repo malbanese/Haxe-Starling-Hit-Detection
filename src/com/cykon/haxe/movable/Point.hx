@@ -17,4 +17,8 @@ package com.cykon.haxe.movable;
 		this.x = x;
 		this.y = y;
 	}
+	
+	public function distance(P1:Point):Float{
+		return Math.sqrt( (P1.x-this.x)*(P1.x-this.x) + (P1.y-this.y)*(P1.y-this.y) ) ;
+	}
  }
