@@ -15,14 +15,15 @@ import starling.events.TouchEvent;
 import starling.events.Touch;
 import starling.display.Stage;
 import starling.display.Shape;
+import starling.display.Image;
 import starling.display.Sprite;
+import starling.textures.RenderTexture;
 import flash.system.System;
 
 import com.cykon.haxe.movable.circle.PlayerCircle;
 import com.cykon.haxe.movable.circle.Circle;
 import com.cykon.haxe.movable.line.Line;
 import com.cykon.haxe.movable.line.LineDisplay;
-import com.cykon.haxe.cmath.Vector;
 import com.cykon.haxe.util.VectorDisplay;
 import com.cykon.haxe.movable.collider.CLCollider;
 import com.cykon.haxe.movable.collider.LLCollider;
@@ -57,6 +58,9 @@ class Shadows extends starling.display.Sprite {
 	var L1:Line = null;
 	var hlDisplay:LineDisplay;
 	
+	var numDegrees:Int = 180;
+	var radianArray:Array<Point> = new Array<Point>();
+	var lightRadius:Int = 300;
 	// Simple constructor
     public function new() {
         super();
@@ -81,15 +85,31 @@ class Shadows extends starling.display.Sprite {
 	}
 	
 	
-	var debugCircle:Circle;
+	var shadowDisplay:Image;
+	var shadowTexture:RenderTexture;
+	var lineCanvas:Shape;
 	/** Function to be called when we are ready to start the game */
 	private function startGame() {		
-		Line.DEBUG = new Sprite();
-		addChild(Line.DEBUG);
+	
 		
-		debugCircle = new Circle(assets.getTexture("circle2"), 0, 0, 10);
+		// Populate the radian array
+		var spacer:Float = 360/numDegrees;
+		for(i in 0...numDegrees){
+			var radian = Math.PI*i*spacer/180;
+			radianArray.push( new Point( Math.cos(radian), Math.sin(radian) ) );
+		}
+		
+		lineCanvas = new Shape();
+		lineCanvas.blendMode = "erase";
+		
+		shadowTexture = new RenderTexture(stage.stageWidth, stage.stageHeight);
+		shadowTexture.clear(0,1);
+		
+		shadowDisplay = new Image(shadowTexture);
+		
+		addChild(shadowDisplay);
+		
 		player = new PlayerCircle( assets.getTexture("circle"), 200, 100, 15, 10);
-		//player.setAcceleration(0,0.25);
 		
 		var hlen = 300;
 		var vlen = 200;
@@ -116,14 +136,12 @@ class Shadows extends starling.display.Sprite {
 		basicCollider.addLines(a_Line);
 		lineDisplay.addLines(a_Line);
 		
-		addChild(debugCircle);
 		addChild(player);
-		addChild(lineDisplay);
 		addChild(hlDisplay);
 		
-		trace("<CLICK> to set circle position.");
-		trace("<SPACE> to shoot circle towards mouse cursor");
-		trace("<F> to change hit response.");
+		trace("<CLICK> to set player position.");
+		trace("<UP / DOWN> to control light radius.");
+		trace("<WASD> to control player position.");
 		trace("<G> to pause");
 		
 		// Start the onEnterFrame calls
@@ -152,16 +170,37 @@ class Shadows extends starling.display.Sprite {
 		
 		basicCollider.iterativeHitTest(player, circleLineHit, circleLineMiss, modifier);
 		
-		Line.DEBUG.removeChildren(0,-1,true);
-		for(i in 0...360){
+		lineCanvas.graphics.clear();
+		
+		lineCanvas.graphics.beginFill(0, 0.9);
+		
+		var firstPoint:Point = null;
+		// Line.DEBUG.removeChildren(0,-1,true);
+		for(i in 0...numDegrees){
+			var line:Line = Line.getLine(player.getX(), player.getY(), player.getX() + radianArray[i].x*lightRadius, player.getY() + radianArray[i].y*lightRadius);
+			var point:Point = lineCollider.hitTest(line, null);
 			
-			var rad = i*Math.PI/180;
-			var line:Line = Line.getLine(player.getX(), player.getY(), Math.cos(rad)*10000, Math.sin(rad)*10000);
-			var point:Point = lineCollider.hitTest(line, lineLineHit);
+			if(point == null)
+				point = line.getP2();
+				
+			if(firstPoint == null){
+				firstPoint = point;
+				lineCanvas.graphics.moveTo(point.x, point.y);
+			}
 			
-			if(point != null)
-				Line.DEBUG.addChild( new Circle(assets.getTexture("circle2"), point.x, point.y, 10) );
+			lineCanvas.graphics.lineTo(point.x, point.y);
 		}
+		
+		if(firstPoint != null)
+			lineCanvas.graphics.lineTo(firstPoint.x, firstPoint.y);
+		
+		lineCanvas.graphics.endFill();
+		
+		shadowTexture.clear(0,1);
+		shadowTexture.draw(lineCanvas);
+		shadowDisplay.removeFromParent(true);
+		shadowDisplay = new Image(shadowTexture);
+		addChild(shadowDisplay);
 	}
 	
 	private function circleLineMiss(circle:Circle, modifier:Float){
@@ -176,16 +215,12 @@ class Shadows extends starling.display.Sprite {
 			running = false;
 	}
 	
-	private function lineLineHit(line:Line, point:Point){
-		debugCircle.setLoc(point.x, point.y);
-	}
-	
-	
-	
 	/** Used to detect clicks */
 	private function onTouch( event:TouchEvent ){
 		var touch:Touch = event.touches[0];
-		if(touch.phase == "ended"){}
+		if(touch.phase == "ended"){
+			player.setLoc(touch.globalX, touch.globalY);
+		}
 		
 		mouseX = touch.globalX;
 		mouseY = touch.globalY;
@@ -200,9 +235,12 @@ class Shadows extends starling.display.Sprite {
 	private function keyDown(event:KeyboardEvent){
 		player.keyDown(event.keyCode);
 		
-		//if(event.keyCode != 71)
-		//	haxe.Log.clear();
-		
+		if(event.keyCode == 38){
+			lightRadius += 25;
+		}
+		if(event.keyCode == 40){
+			lightRadius -= 25;
+		}
 		if(event.keyCode == 70){
 			hitType = !hitType;
 			trace(hitType ? "Bouncing." : "Sliding.");
