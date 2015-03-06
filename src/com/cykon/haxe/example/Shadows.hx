@@ -18,6 +18,7 @@ import starling.display.Shape;
 import starling.display.Image;
 import starling.display.Sprite;
 import starling.textures.RenderTexture;
+import starling.filters.BlurFilter;
 import flash.system.System;
 
 import com.cykon.haxe.movable.circle.PlayerCircle;
@@ -58,7 +59,7 @@ class Shadows extends starling.display.Sprite {
 	var L1:Line = null;
 	var hlDisplay:LineDisplay;
 	
-	var numDegrees:Int = 180;
+	var numDegrees:Int = 200;
 	var radianArray:Array<Point> = new Array<Point>();
 	var lightRadius:Int = 300;
 	// Simple constructor
@@ -85,6 +86,7 @@ class Shadows extends starling.display.Sprite {
 	}
 	
 	
+	var bFilter:BlurFilter = new BlurFilter(0.5,0.5,0.5);
 	var shadowDisplay:Image;
 	var shadowTexture:RenderTexture;
 	var lineCanvas:Shape;
@@ -106,6 +108,7 @@ class Shadows extends starling.display.Sprite {
 		shadowTexture.clear(0,1);
 		
 		shadowDisplay = new Image(shadowTexture);
+		shadowDisplay.filter = bFilter;
 		
 		addChild(shadowDisplay);
 		
@@ -139,10 +142,10 @@ class Shadows extends starling.display.Sprite {
 		addChild(player);
 		addChild(hlDisplay);
 		
-		trace("<CLICK> to set player position.");
+		/*trace("<CLICK> to set player position.");
 		trace("<UP / DOWN> to control light radius.");
 		trace("<WASD> to control player position.");
-		trace("<G> to pause");
+		trace("<G> to pause");*/
 		
 		// Start the onEnterFrame calls
 		this.addEventListener(EnterFrameEvent.ENTER_FRAME, onEnterFrame);	
@@ -160,6 +163,10 @@ class Shadows extends starling.display.Sprite {
 	}
 	
 	
+	
+	var prevX:Float = 0;
+	var prevY:Float = 0;
+	var skip = 1;
 	/** Function called every frame update, main game logic loop */
 	private function onEnterFrame( event:EnterFrameEvent ) {
 		if(!running)
@@ -170,12 +177,17 @@ class Shadows extends starling.display.Sprite {
 		
 		basicCollider.iterativeHitTest(player, circleLineHit, circleLineMiss, modifier);
 		
+		if(prevX == player.x && prevY == player.y|| skip++ % 2 != 0)
+			return;
+		skip = 1;
+		
+		prevX = player.x;
+		prevY = player.y;
 		lineCanvas.graphics.clear();
 		
-		lineCanvas.graphics.beginFill(0, 0.9);
+		lineCanvas.graphics.beginFill(0,1);
 		
-		var firstPoint:Point = null;
-		// Line.DEBUG.removeChildren(0,-1,true);
+		var firstPoint:Point = null;	
 		for(i in 0...numDegrees){
 			var line:Line = Line.getLine(player.getX(), player.getY(), player.getX() + radianArray[i].x*lightRadius, player.getY() + radianArray[i].y*lightRadius);
 			var point:Point = lineCollider.hitTest(line, null);
@@ -198,9 +210,6 @@ class Shadows extends starling.display.Sprite {
 		
 		shadowTexture.clear(0,1);
 		shadowTexture.draw(lineCanvas);
-		shadowDisplay.removeFromParent(true);
-		shadowDisplay = new Image(shadowTexture);
-		addChild(shadowDisplay);
 	}
 	
 	private function circleLineMiss(circle:Circle, modifier:Float){
@@ -260,7 +269,7 @@ class Shadows extends starling.display.Sprite {
     public static function main() {		
         try {
 			// Attempt to start the game logic 
-			var starling = new starling.core.Starling(Shadows, flash.Lib.current.stage);
+			var starling = new starling.core.Starling(Shadows, flash.Lib.current.stage, null, null, "auto", "baseline");
 			starling.showStats = true;
             globalStage = starling.stage; 
 			starling.start();  
